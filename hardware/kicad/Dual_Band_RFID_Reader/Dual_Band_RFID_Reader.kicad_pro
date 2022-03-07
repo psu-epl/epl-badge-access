@@ -342,6 +342,10 @@
     [
       "2a5888bc-6902-48de-89e6-17a0ce9b4141",
       "Low Frequency RF"
+    ],
+    [
+      "bc559fd9-5ee4-4aad-844b-eca350a94832",
+      "High Frequency RF"
     ]
   ],
   "text_variables": {}
