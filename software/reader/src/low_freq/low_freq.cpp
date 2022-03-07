@@ -1,14 +1,14 @@
 #include "low_freq.h"
 
 using namespace team17;
-
+using namespace std;
 
 LowFrequency::LowFrequency(QueueHandle_t tagQueue, uint8_t din) : din_(din),
                                                         elapsed_(0),
                                                         state_(StateName::idle),
                                                         edgeCount_(0),
-                                                        tag_(etl::bitset<TAG_BIT_SIZE>()),
-                                                        header_(etl::bitset<HEADER_BIT_SIZE>()),
+                                                        header_(std::bitset<HEADER_BIT_SIZE>()),
+                                                        tag_(Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE)),
                                                         tagPrefix_(TAG_PREFIX),
                                                         edgeQueue_(NULL),
                                                         tagQueue_(tagQueue)
@@ -90,7 +90,6 @@ void LowFrequency::edge(uint32_t edge)
                 {
                     // we got our header, start expecting 15 zeros
                     header_.reset();
-                    tag_ = (tag_ |= 0x07);
                     state_ = StateName::started;
                 }
             }
@@ -112,13 +111,13 @@ void LowFrequency::edge(uint32_t edge)
             // If we have 5 edges, that is one data bit, so shift 1 bit into the right of the tag
             if (edgeCount_ == 5)
             {
-                tag_ = (tag_ << 1) |= 1;
+                tag_.addBit(1);
                 edgeCount_ = 0;
 
-                if (gotTag())
+                if ( tag_.getLength() == TAG_BIT_SIZE )
                 {
-                    etl::bitset<TAG_BIT_SIZE> *newTag = new etl::bitset<TAG_BIT_SIZE>(tag_.to_string().c_str());
-                    xQueueSend(tagQueue_, (void *)&newTag, portMAX_DELAY);
+                    Tag *newTag = new Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE, *(tag_.getData()));
+                    xQueueSend(tagQueue_, newTag, portMAX_DELAY);
                     resetState();
                 }
             }
@@ -133,14 +132,15 @@ void LowFrequency::edge(uint32_t edge)
             {
                 // there were 5 zeros (or space enough for 5 zeros - we'll assume that's what was there since
                 // we can't see the zeros)
-                tag_ = (tag_ << 1);
+                tag_.addBit(0);
                 edgeCount_++;
             }
             else if (TWO_ZERO_BITS(edge))
             {
                 // there was space for 10 zeros, so assume there were 10 because we're optimists and things
                 // in computers seldom go wrong
-                tag_ = (tag_ << 2);
+                tag_.addBit(0);
+                tag_.addBit(0);
                 edgeCount_++;
             }
             else
@@ -158,14 +158,6 @@ void LowFrequency::resetState()
     state_ = StateName::idle;
     edgeCount_ = 0;
     tag_.reset();
-}
-
-bool LowFrequency::gotTag()
-{
-    // since we shift in bits from the right (including the header value)
-    // we've gotten a full tag if the header (000111) is currently at the
-    // far left side of the bitfield
-    return tag_.to_string().compare(0, 6, tagPrefix_) == 0;
 }
 
 bool LowFrequency::edgeCallback(mcpwm_unit_t mcpwm, mcpwm_capture_channel_id_t cap_channel, const cap_event_data_t *edata, void *user_data)

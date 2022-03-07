@@ -1,10 +1,11 @@
 #pragma once
-#include <Arduino.h>
 
-#include "include/etl/bitset.h"
-#include "include/etl/string.h"
-#include "include/etl/optional.h"
+#include <Arduino.h>
+#include <bitset>
+#include <string>
+#include <optional>
 #include "driver/mcpwm.h"
+#include "tag/tag.h"
 
 #include "driver/ledc.h"
 
@@ -37,7 +38,6 @@ namespace team17 {
     class LowFrequency
     {
     public:
-        LowFrequency(){};
         LowFrequency(QueueHandle_t tagQueue, uint8_t din);
 
         static bool edgeCallback(mcpwm_unit_t mcpwm, mcpwm_capture_channel_id_t cap_channel, const cap_event_data_t *edata, void *user_data);
@@ -52,11 +52,11 @@ namespace team17 {
         uint8_t din_;
         StateName state_;
         uint8_t edgeCount_;
-        etl::bitset<TAG_BIT_SIZE> tag_;
-        etl::bitset<HEADER_BIT_SIZE> header_;
+        std::bitset<HEADER_BIT_SIZE> header_;
+        Tag tag_;
         void resetState();
         bool gotTag();
-        const etl::string<TAG_PREFIX_LENGTH> tagPrefix_;
+        const std::string tagPrefix_;
         QueueHandle_t edgeQueue_;
         QueueHandle_t tagQueue_;
         uint32_t buf[4096];
