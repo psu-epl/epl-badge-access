@@ -38,27 +38,24 @@ namespace team17 {
     class LowFrequency
     {
     public:
-        LowFrequency(QueueHandle_t tagQueue, uint8_t din);
-
         static bool edgeCallback(mcpwm_unit_t mcpwm, mcpwm_capture_channel_id_t cap_channel, const cap_event_data_t *edata, void *user_data);
+        LowFrequency(QueueHandle_t tagQueue, uint8_t din);
         esp_err_t start();
         void edge(uint32_t edge);
-        unsigned long elapsed_;
+        QueueHandle_t getEdgeQueue();
 
     private:
-        bool inGroup(unsigned long currentMicros);
-        esp_err_t carrierOn();
 
         uint8_t din_;
         StateName state_;
         uint8_t edgeCount_;
         std::bitset<HEADER_BIT_SIZE> header_;
         Tag tag_;
-        void resetState();
-        bool gotTag();
-        const std::string tagPrefix_;
         QueueHandle_t edgeQueue_;
         QueueHandle_t tagQueue_;
-        uint32_t buf[4096];
+
+        static void edgeTask(void *p);
+        esp_err_t carrierOn();
+        void resetState();
     };
 }

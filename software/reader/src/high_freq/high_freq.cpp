@@ -3,87 +3,75 @@
 using namespace team17;
 using namespace std;
 
-void isr(void *p);
+#define WAKEUP_POLL_INTERVAL_MS 1
+#define ANTENNA_GAIN 0x02 << 4 // 23 dB
+                               // http://www.nxp.com/documents/data_sheet/MFRC522.pdf
 
-HighFrequency::HighFrequency(QueueHandle_t tagQueue, MFRC522_SPI &mfrc522Spi, uint8_t intPin) : mfrc522Spi_(mfrc522Spi),
-                                                                                               mfrc522_(&mfrc522Spi),
-                                                                                               tagQueue_(tagQueue),
-                                                                                               readQueue_(xQueueCreate(1, sizeof(bool))),
-                                                                                               gotRead_(false),
-                                                                                               intPin_(intPin)
+HighFrequency::HighFrequency(QueueHandle_t tagQueue, MFRC522_SPI &mfrc522Spi) : mfrc522Spi_(mfrc522Spi),
+                                                                                mfrc522_(&mfrc522Spi),
+                                                                                tagQueue_(tagQueue)
 {
-
-}
-
-QueueHandle_t HighFrequency::getReadQueue()
-{
-    return this->readQueue_;
 }
 
 void HighFrequency::start()
 {
-    Tag *tag;
+    SPI.begin();         // Init SPI bus
+    mfrc522_.PCD_Init(); // Init MFRC522 card
+    mfrc522_.PCD_SetAntennaGain(ANTENNA_GAIN);
+    xTaskCreate(
+        wakeupTagTask,
+        "HF Tag Wakeup",
+        4096,
+        this,
+        5,
+        NULL);
 
-    TaskHandle_t taskHandle = xTaskGetCurrentTaskHandle();
+    byte gain = mfrc522_.PCD_GetAntennaGain();
+    log_i("antenna gain byte: %d", gain);
+    log_i("starting hf rx loop");
+}
 
-    attachInterruptArg(digitalPinToInterrupt(intPin_), isr, &taskHandle, HIGH);
+void HighFrequency::wakeupTagTask(void *p)
+{
+    byte atqa_answer[2];
+    byte atqa_size;
+    HighFrequency *that = ((HighFrequency *)p);
 
     for (;;)
     {
-        if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
+        memset(atqa_answer, 0, sizeof(atqa_answer));
+        byte atqa_size = sizeof(atqa_answer);
+        MFRC522::StatusCode statusCode = that->mfrc522_.PICC_WakeupA(atqa_answer, &atqa_size);
+
+        switch (statusCode)
         {
-            if (processTag(tag))
-            {
-                xQueueSend(tagQueue_, tag, portMAX_DELAY);
-            }
+        case MFRC522::STATUS_OK:
+            that->processTag();
+            break;
+        case MFRC522::STATUS_TIMEOUT:
+            break;
+        default:
+            const __FlashStringHelper *fs = that->mfrc522_.GetStatusCodeName(statusCode);
+            log_w("card wakeup returned: `%s`", fs);
         }
+        that->mfrc522_.PICC_HaltA();
+        vTaskDelay(portTICK_PERIOD_MS * WAKEUP_POLL_INTERVAL_MS);
     }
+
+    vTaskDelete(NULL);
 }
 
-bool HighFrequency::processTag(Tag * tag)
+Tag * HighFrequency::processTag()
 {
-    if (mfrc522_.PICC_IsNewCardPresent())
+    if (mfrc522_.PICC_ReadCardSerial() && mfrc522_.uid.size > 0)
     {
-        if (mfrc522_.PICC_ReadCardSerial())
+        Tag *tag = new Tag(Tag::TagType::HighFrequency, mfrc522_.uid.size);
+        for (int i = 0; i < mfrc522_.uid.size; i++)
         {
-            if (mfrc522_.uid.size > 0)
-            {
-                tag = new Tag(Tag::TagType::HighFrequency, mfrc522_.uid.size);
-                for (int i = 0; i < mfrc522_.uid.size; i++)
-                {
-                    tag->getData()->push_back(mfrc522_.uid.uidByte[i]);
-                };
-                return true;
-            }
-            else
-            {
-                log_e("card uid length is 0");
-            }
-        }
-        else
-        {
-            log_e("unable to read card serial");
-        }
-    }
-    else
-    {
-        log_i("no card preent");
+            tag->addByte(mfrc522_.uid.uidByte[i]);
+        };
+        xQueueSend(tagQueue_, &tag, portMAX_DELAY);
     }
 
-    mfrc522_.PICC_HaltA();
-    return false;
-}
-
-void IRAM_ATTR isr(void *p)
-{
-    BaseType_t xHigherPriorityTaskWoken;
-    xHigherPriorityTaskWoken = pdFALSE;
-
-    TaskHandle_t *t = (TaskHandle_t *)p;
-    vTaskNotifyGiveFromISR(*t, &xHigherPriorityTaskWoken);
-
-    if (xHigherPriorityTaskWoken)
-    {
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    }
+    return NULL;
 }

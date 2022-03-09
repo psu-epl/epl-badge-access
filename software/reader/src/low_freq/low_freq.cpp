@@ -4,12 +4,10 @@ using namespace team17;
 using namespace std;
 
 LowFrequency::LowFrequency(QueueHandle_t tagQueue, uint8_t din) : din_(din),
-                                                        elapsed_(0),
                                                         state_(StateName::idle),
                                                         edgeCount_(0),
                                                         header_(std::bitset<HEADER_BIT_SIZE>()),
                                                         tag_(Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE)),
-                                                        tagPrefix_(TAG_PREFIX),
                                                         edgeQueue_(NULL),
                                                         tagQueue_(tagQueue)
 
@@ -25,7 +23,6 @@ esp_err_t LowFrequency::start()
     }
 
     edgeQueue_ = xQueueCreate(4096, sizeof(uint32_t));
-    uint32_t tmpEdge = 0;
     
     mcpwm_pin_config_t pinConfig = {
         .mcpwm_cap0_in_num = din_};
@@ -40,17 +37,40 @@ esp_err_t LowFrequency::start()
     mcpwm_capture_enable_channel(MCPWM_UNIT_0, MCPWM_SELECT_CAP0, &capConfig);
     mcpwm_set_pin(MCPWM_UNIT_0, &pinConfig);
 
-    for (; ;)
+    xTaskCreate(
+        edgeTask,
+        "Low Frequency RX loop",
+        4096,
+        this,
+        5,
+        NULL);
+
+    log_i("starting lf rx loop");
+    return 0;
+}
+
+void LowFrequency::edgeTask(void *p)
+{
+    LowFrequency *that = (LowFrequency *)p;
+    uint32_t edge = 0;
+
+    for (;;)
     {
-        if(xQueueReceive(edgeQueue_, &tmpEdge, portMAX_DELAY)) {
-            edge(tmpEdge);
-            //log_i("%d", tmpEdge);
+        if (xQueueReceive(that->getEdgeQueue(), &edge, portMAX_DELAY))
+        {
+            that->edge(edge);
         }
         else
         {
             log_w("receive from edgeQueue failed");
         };
     }
+    vTaskDelete(NULL);
+}
+
+QueueHandle_t LowFrequency::getEdgeQueue()
+{
+    return edgeQueue_;
 }
 
 void LowFrequency::edge(uint32_t edge)
