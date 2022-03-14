@@ -16,9 +16,9 @@
 #define TAG_PREFIX_LENGTH 6
 
 #define IN_GROUP(i) (i > 5000 && i < 7000)
-#define ZERO_BIT(i) (i > 35000 && i < 45000)
-#define TWO_ZERO_BITS(i) (i > 65000 && i < 75000)
-#define ZEROS_START_MARKER(i) (i > 103000 && i < 104000)
+#define ZERO_BIT(i) (i > 30000 && i < 45000)
+#define TWO_ZERO_BITS(i) (i > 60000 && i < 80000)
+#define ZEROS_START_MARKER(i) (i > 100000 && i < 104000)
 
 #define PWM_CHANNEL 0
 #define PWM_FREQUENCY 125000

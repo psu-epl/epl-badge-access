@@ -22,7 +22,7 @@ namespace team17
 
         Tag(TagType tagType, size_t length);
         Tag(TagType tagType, size_t length, std::vector<uint8_t> data);
-        size_t getLength();
+        size_t getBitCount();
         std::vector<uint8_t> * getData();
         tag_err_t addBit(uint8_t b);
         tag_err_t addByte(uint8_t b);

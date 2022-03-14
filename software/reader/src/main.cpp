@@ -7,17 +7,10 @@
 #include "MFRC522.h"
 
 using namespace team17;
-#define RX 16
-#define TX 17
 
 #define HF_NSS 21
 #define HF_RST 27
 #define HF_INT 33
-
-#define PWM_CHANNEL 0
-#define PWM_FREQUENCY 125000
-#define PWM_DUTYCYCLE 0
-#define PWM_RESOLUTION 1
 
 QueueHandle_t tagQueue = xQueueCreate(1, sizeof(Tag *));
 MFRC522_SPI mfrc522Spi = MFRC522_SPI(HF_NSS, HF_RST);
@@ -33,7 +26,12 @@ void setup()
 {
   Serial.begin(115200);
 
-  lowFreq.start();
+  error_t startErr = lowFreq.start();
+  if (startErr)
+  {
+    printf("start error: %d", startErr);
+  }
+
   highFreq.start();
 }
 

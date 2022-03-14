@@ -50,9 +50,9 @@ void HighFrequency::wakeupTagTask(void *p)
             break;
         case MFRC522::STATUS_TIMEOUT:
             break;
-        default:
-            const __FlashStringHelper *fs = that->mfrc522_.GetStatusCodeName(statusCode);
-            log_w("card wakeup returned: `%s`", fs);
+        // default:
+        //     const __FlashStringHelper *fs = that->mfrc522_.GetStatusCodeName(statusCode);
+        //     log_w("card wakeup returned: `%s`", fs);
         }
         that->mfrc522_.PICC_HaltA();
         vTaskDelay(portTICK_PERIOD_MS * WAKEUP_POLL_INTERVAL_MS);

@@ -30,9 +30,9 @@ string Tag::getType()
     return string("Unknown Type");
 }
 
-size_t Tag::getLength()
+size_t Tag::getBitCount()
 {
-    return data_.size();
+    return bitCount_;
 }
 
 vector<uint8_t> * Tag::getData()
@@ -43,11 +43,12 @@ vector<uint8_t> * Tag::getData()
 void Tag::reset()
 {
     data_.clear();
+    bitCount_ = 0;
 }
 
 tag_err_t Tag::addBit(uint8_t b)
 {
-    if( bitCount_ >= length_ )
+    if (bitCount_ >= length_)
     {
         return 1;
     }

@@ -12,6 +12,7 @@ LowFrequency::LowFrequency(QueueHandle_t tagQueue, uint8_t din) : din_(din),
                                                         tagQueue_(tagQueue)
 
 {
+    pinMode(TX, OUTPUT);
     pinMode(din_, INPUT);
 }
 
@@ -59,6 +60,7 @@ void LowFrequency::edgeTask(void *p)
         if (xQueueReceive(that->getEdgeQueue(), &edge, portMAX_DELAY))
         {
             that->edge(edge);
+            //log_i("%d", edge);
         }
         else
         {
@@ -111,6 +113,12 @@ void LowFrequency::edge(uint32_t edge)
                     // we got our header, start expecting 15 zeros
                     header_.reset();
                     state_ = StateName::started;
+                    tag_.addBit(0);
+                    tag_.addBit(0);
+                    tag_.addBit(0);
+                    tag_.addBit(1);
+                    tag_.addBit(1);
+                    tag_.addBit(1);
                 }
             }
         }
@@ -131,13 +139,18 @@ void LowFrequency::edge(uint32_t edge)
             // If we have 5 edges, that is one data bit, so shift 1 bit into the right of the tag
             if (edgeCount_ == 5)
             {
-                tag_.addBit(1);
+                if (tag_.addBit(1))
+                {
+                    log_e("error adding a one bit to tag");
+                    resetState();
+                    return;
+                }
                 edgeCount_ = 0;
 
-                if ( tag_.getLength() == TAG_BIT_SIZE )
+                if ( tag_.getBitCount() == TAG_BIT_SIZE )
                 {
                     Tag *newTag = new Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE, *(tag_.getData()));
-                    xQueueSend(tagQueue_, newTag, portMAX_DELAY);
+                    xQueueSend(tagQueue_, &newTag, portMAX_DELAY);
                     resetState();
                 }
             }
@@ -152,7 +165,20 @@ void LowFrequency::edge(uint32_t edge)
             {
                 // there were 5 zeros (or space enough for 5 zeros - we'll assume that's what was there since
                 // we can't see the zeros)
-                tag_.addBit(0);
+                if (tag_.addBit(0))
+                {
+                    log_e("error adding a zero bit to tag");
+                    resetState();
+                    return;
+                }
+                if (tag_.getBitCount() == TAG_BIT_SIZE)
+                {
+                    Tag *newTag = new Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE, *(tag_.getData()));
+                    xQueueSend(tagQueue_, newTag, portMAX_DELAY);
+                    resetState();
+                    return;
+                }
+
                 edgeCount_++;
             }
             else if (TWO_ZERO_BITS(edge))
@@ -161,6 +187,15 @@ void LowFrequency::edge(uint32_t edge)
                 // in computers seldom go wrong
                 tag_.addBit(0);
                 tag_.addBit(0);
+
+                if (tag_.getBitCount() == TAG_BIT_SIZE)
+                {
+                    Tag *newTag = new Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE, *(tag_.getData()));
+                    xQueueSend(tagQueue_, newTag, portMAX_DELAY);
+                    resetState();
+                    return;
+                }
+
                 edgeCount_++;
             }
             else
