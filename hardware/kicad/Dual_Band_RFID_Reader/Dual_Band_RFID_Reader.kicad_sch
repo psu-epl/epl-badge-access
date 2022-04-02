@@ -10,7 +10,7 @@
   )
 
   (lib_symbols
-    (symbol "capstone:Adafruit_Huzzah32" (in_bom yes) (on_board yes)
+    (symbol "Capstone Symbol Lib:Adafruit_Huzzah32" (in_bom yes) (on_board yes)
       (property "Reference" "U" (id 0) (at 0 0 0)
         (effects (font (size 1.27 1.27)))
       )
@@ -475,7 +475,7 @@
     (pin "1" (uuid 5bd85aad-c6f3-4728-977b-a0bb61ca8d2a))
   )
 
-  (symbol (lib_id "capstone:Adafruit_Huzzah32") (at 55.88 109.22 0) (unit 1)
+  (symbol (lib_id "Capstone Symbol Lib:Adafruit_Huzzah32") (at 55.88 109.22 0) (unit 1)
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid eeb3eed9-254a-481d-a4b3-7177dae5988c)
     (property "Reference" "U1" (id 0) (at 55.88 109.22 0)
@@ -484,7 +484,7 @@
     (property "Value" "Adafruit_Huzzah32" (id 1) (at 55.88 129.54 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "" (id 2) (at 55.88 109.22 0)
+    (property "Footprint" "Capstone Footprint Lib:Adafruit Feather Huzzah 32" (id 2) (at 55.88 109.22 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (id 3) (at 55.88 109.22 0)
@@ -499,12 +499,12 @@
     (property "datasheet URL" "https://cdn-learn.adafruit.com/downloads/pdf/adafruit-huzzah32-esp32-feather.pdf" (id 6) (at 55.88 109.22 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb042044))
-    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb042044))
-    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb042044))
-    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb042044))
-    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb042044))
-    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb042044))
+    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb04208a))
+    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb04208a))
+    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb04208a))
+    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb04208a))
+    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb04208a))
+    (pin "" (uuid 059cd7d7-b241-4149-b0f9-5a1feb04208a))
     (pin "18" (uuid 8519fc87-8623-4608-8360-a61f98fca4c3))
     (pin "19" (uuid a96e5d3c-2160-4116-ba26-f3c6cbc5f3d3))
     (pin "21" (uuid 7184fbba-91ae-437f-92a0-f6ac10c3ea0d))
@@ -683,19 +683,19 @@
       (reference "C20") (unit 1) (value "C") (footprint "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder")
     )
     (path "/2a5888bc-6902-48de-89e6-17a0ce9b4141/5acb20b2-f807-4496-9f75-1929fd1f542d"
-      (reference "D1") (unit 1) (value "1N4148") (footprint "")
+      (reference "D1") (unit 1) (value "1N4148") (footprint "ZenerDiodes:DIOAD829W49L456D191")
     )
     (path "/2a5888bc-6902-48de-89e6-17a0ce9b4141/8a6d9f77-981f-4711-a139-385b0b2abc7c"
       (reference "L1") (unit 1) (value "162 µH") (footprint "")
     )
     (path "/bc559fd9-5ee4-4aad-844b-eca350a94832/15e8eb38-fa13-4ee5-a10b-52d3c19420ad"
-      (reference "L2") (unit 1) (value "INDUCTOR") (footprint "")
+      (reference "L2") (unit 1) (value "INDUCTOR") (footprint "Inductor_SMD:L_0603_1608Metric_Pad1.05x0.95mm_HandSolder")
     )
     (path "/bc559fd9-5ee4-4aad-844b-eca350a94832/9fe3cc0f-94ef-45c0-99a6-5c285f71f685"
-      (reference "L3") (unit 1) (value "INDUCTOR") (footprint "")
+      (reference "L3") (unit 1) (value "INDUCTOR") (footprint "Inductor_SMD:L_0603_1608Metric_Pad1.05x0.95mm_HandSolder")
     )
     (path "/bc559fd9-5ee4-4aad-844b-eca350a94832/0c00bcad-fbb0-4a8f-8eae-5cacf8dc3091"
-      (reference "L4") (unit 1) (value "INDUCTOR") (footprint "")
+      (reference "L4") (unit 1) (value "INDUCTOR") (footprint "Inductor_SMD:L_0603_1608Metric_Pad1.05x0.95mm_HandSolder")
     )
     (path "/2a5888bc-6902-48de-89e6-17a0ce9b4141/a2af022a-47d0-4ef8-8e55-89cd26190f9b"
       (reference "Q1") (unit 1) (value "BC517") (footprint "Package_TO_SOT_THT:TO-92_Inline")
@@ -746,19 +746,19 @@
       (reference "R15") (unit 1) (value "10k") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
     )
     (path "/eeb3eed9-254a-481d-a4b3-7177dae5988c"
-      (reference "U1") (unit 1) (value "Adafruit_Huzzah32") (footprint "")
+      (reference "U1") (unit 1) (value "Adafruit_Huzzah32") (footprint "Capstone Footprint Lib:Adafruit Feather Huzzah 32")
     )
     (path "/2a5888bc-6902-48de-89e6-17a0ce9b4141/4ac97269-7e37-4137-bb95-a31528674e8f"
-      (reference "U2") (unit 1) (value "LM393") (footprint "")
+      (reference "U2") (unit 1) (value "LM393") (footprint "DualComparator_LM393:SO08")
     )
     (path "/2a5888bc-6902-48de-89e6-17a0ce9b4141/8f68e74a-7b7b-4ea1-9129-44a724df83ae"
-      (reference "U3") (unit 1) (value "LM324") (footprint "")
+      (reference "U3") (unit 1) (value "LM324") (footprint "GPOPAmp_LM324:SOIC127P600X175-14N")
     )
     (path "/bc559fd9-5ee4-4aad-844b-eca350a94832/87de0e83-a3b8-45fc-9ed8-06568275cf07"
-      (reference "U4") (unit 1) (value "MFRC522") (footprint "")
+      (reference "U4") (unit 1) (value "MFRC522") (footprint "MIFARE:QFN50P500X500X100-33N")
     )
     (path "/bc559fd9-5ee4-4aad-844b-eca350a94832/190d7b3a-0eea-4cf5-b0a2-3e98dee623a4"
-      (reference "Y1") (unit 1) (value "Crystal") (footprint "")
+      (reference "Y1") (unit 1) (value "Crystal") (footprint "Capstone Footprint Lib:Crystal_SMD_3225-4Pin_3.2x2.5mm_HandSoldering")
     )
   )
 )
