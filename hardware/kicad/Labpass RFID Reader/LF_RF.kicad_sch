@@ -2,7 +2,7 @@
 
   (uuid b354bda5-446d-4ce6-8ca3-7b02b8b907d7)
 
-  (paper "A4")
+  (paper "A")
 
   (title_block
     (title "Labpass RFID Reader - Low Frquency RF")
