@@ -1,0 +1,88 @@
+---
+
+- name: Provision Labpass Server
+  hosts: all
+  tasks:
+
+  - name: 'Change time zone'
+    timezone:
+      name: "{{ntp.timezone}}"
+  
+  - name: 'Template out Netplan YAML to configure networking'
+    template:
+      src: ./templates/99_config.yaml.tpl
+      dest: /etc/netplan/99_config.yaml
+  
+  - name: 'Applying Netplan Configuration'
+    command: netplan apply
+    become: yes
+    become_method: sudo
+  
+  - name: Upgrade the OS (apt-get dist-upgrade)
+    apt:
+      upgrade: dist
+      update_cache: yes
+    become: yes
+  
+  - name: Update all packages to latest versions
+    apt:
+      name: "*"
+      state: latest
+      update_cache: yes
+    become: yes
+  
+  - name: 'Install Docker'
+    apt:
+      name: docker.io
+      state: present
+  
+  - name: Install postgress systemd unit file
+    ansible.builtin.template:
+      src: templates/postgres.service.tpl
+      dest: /etc/systemd/system/postgres.service
+      owner: bin
+      group: wheel
+      mode: '0644'
+    notify:
+      - reload systemd
+      - restart postgres
+  
+  - name: Install adminer systemd unit file
+    ansible.builtin.template:
+      src: templates/adminer.service.tpl
+      dest: /etc/systemd/system/adminer.service
+      owner: bin
+      group: wheel
+      mode: '0644'
+    notify:
+      - reload systemd
+      - restart adminer
+  
+  - name: Install labpass systemd unit file
+    ansible.builtin.template:
+      src: templates/labpass.service.tpl
+      dest: /etc/systemd/system/labpass.service
+      owner: bin
+      group: wheel
+      mode: '0644'
+    notify:
+      - reload systemd
+      - restart labpass
+  
+  - name: Enable service postgres and ensure it is not masked
+    ansible.builtin.systemd:
+      name: postgres
+      enabled: yes
+      state: started
+  
+  - name: Enable service adminer and ensure it is not masked
+    ansible.builtin.systemd:
+      name: adminer
+      enabled: yes
+      state: started
+  
+  - name: Enable service labpass
+    ansible.builtin.systemd:
+      name: labpass
+      enabled: yes
+      state: started

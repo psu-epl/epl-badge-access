@@ -1,0 +1,23 @@
+---
+
+- name: reload systemd
+  sudo: yes
+  command: systemctl daemon-reload
+
+- name: restart postgres
+  ansible.builtin.systemd:
+    name: postgres
+    enabled: yes
+    state: restarted
+
+- name: restart adminer
+  ansible.builtin.systemd:
+    name: adminer
+    enabled: yes
+    state: restarted
+
+- name: restart labpass
+  ansible.builtin.systemd:
+    name: labpass
+    enabled: yes
+    state: restarted
