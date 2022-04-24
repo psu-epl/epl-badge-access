@@ -11,6 +11,8 @@
 # Set your hostname here, the manage_etc_hosts will update the hosts file entries as well
 hostname: labpass
 
+timezone: America/Los_Angeles
+
 # Enable password authentication with the SSH daemon
 ssh_pwauth: true
 
@@ -20,11 +22,11 @@ users:
   primary-group: users
   shell: /bin/bash
   sudo: ALL=(ALL) NOPASSWD:ALL
-  passwd: $5$JohOZuDSz8s4hrMS$WAmGo.fT8UTVLLExKKag1KEP9QAIn16KJCfcEEhfnWC
+  passwd: 
   groups: users,adm,dialout,audio,plugdev,netdev,video
   lock_passwd: true
   ssh-authorized-keys:
-    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDtpAxHXoJaIxbbfkTZGh6IPqCfQyD7oBSwDxdocNmzxbMXbfqwML/CN7Rfp0icBC+fCL03LgcpmZ9nuF1Jvfjp90JhnXWD2hrnLjBrOaP4x6RlTSkFLSLxgJaLe6JTjb3pMJmkPgqpNhtC/T2SyfG8G5MRDnNItyn5vof2ZxanDO5rs2unNpr11LIFqa9s/UmjUQFOgeqWT8OZWY239abdMzh2OvY4gsDn5KCOHuzPdy8zcYeevLozInY4kNvywZtx+KkA0j6X9LHTO0Il7IzvPcdpw8VlqMK/mw3ENcE4aHfbmGyRKOSmamP5Wi0fCZqjXYnFQy+nyBIkz7Yi3IFQjUVuCuafIBvDmWUCuYiL3fmCH4R+KdNzE/Jes3zXABjcYF89fHRu2O99kKKjj53Un7SUdghtJrH9h4FJKOrZHgRqT4udJ2vOwxJB9qwW8Q0vqn/U79Ds80+H3updm40OUJB93LtMPpwqIKghuDsFaYO/J62zK38UBLZpUvKeCf8= ansible@rashome1
+    - 
 
 ## Update apt database and upgrade packages on first boot
 package_update: true
@@ -42,3 +44,23 @@ runcmd:
 powerstate:
   delay: "+5"
   mode: reboot
+
+write_files:
+- content: |
+    DATABASE_PASSWORD=
+    SESSION_SECRET=
+    JWT_SECRET=
+  path: /etc/labpass/passwords
+  permissions: '0600'
+
+- content: |
+    {
+    	"auths": {
+    		"gitlab.cecs.pdx.edu:5050": {
+    			"auth": ""
+    		}
+    	}
+    }
+  path: /root/.docker/config.json
+runcmd:
+- [ "sh", "-c", "chmod 0700 /etc/labpass" ]

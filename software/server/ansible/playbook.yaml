@@ -1,7 +1,10 @@
 ---
 
 - name: Provision Labpass Server
-  hosts: all
+  hosts: localhost
+  vars_files:
+    - variables.yaml
+
   tasks:
 
   - name: 'Change time zone'
@@ -41,7 +44,7 @@
       src: templates/postgres.service.tpl
       dest: /etc/systemd/system/postgres.service
       owner: bin
-      group: wheel
+      group: root
       mode: '0644'
     notify:
       - reload systemd
@@ -52,7 +55,7 @@
       src: templates/adminer.service.tpl
       dest: /etc/systemd/system/adminer.service
       owner: bin
-      group: wheel
+      group: root
       mode: '0644'
     notify:
       - reload systemd
@@ -63,7 +66,7 @@
       src: templates/labpass.service.tpl
       dest: /etc/systemd/system/labpass.service
       owner: bin
-      group: wheel
+      group: root
       mode: '0644'
     notify:
       - reload systemd
@@ -86,3 +89,28 @@
       name: labpass
       enabled: yes
       state: started
+
+
+  handlers:
+
+  - name: reload systemd
+    become: yes
+    command: systemctl daemon-reload
+  
+  - name: restart postgres
+    ansible.builtin.systemd:
+      name: postgres
+      enabled: yes
+      state: restarted
+  
+  - name: restart adminer
+    ansible.builtin.systemd:
+      name: adminer
+      enabled: yes
+      state: restarted
+  
+  - name: restart labpass
+    ansible.builtin.systemd:
+      name: labpass
+      enabled: yes
+      state: restarted
