@@ -9,6 +9,14 @@
     apt:
       name: docker.io
       state: present
+
+  - name: Create root's .docker directory
+    ansible.builtin.file:
+      path: /root/.docker
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
   
   - name: Write docker registry login
     ansible.builtin.template:

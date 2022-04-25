@@ -7,7 +7,7 @@ After=docker.service
 
 [Service]
 Type=oneshot
-Environment=IMAGE={{ docker_images.labpass-seed }}
+Environment=IMAGE={{ docker_images.labpass_seed }}
 ExecStartPre=-/usr/bin/docker kill %p
 ExecStartPre=-/usr/bin/docker rm %p
 ExecStartPre=-/usr/bin/docker pull ${IMAGE}
