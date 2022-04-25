@@ -167,10 +167,6 @@
       masked: no
       state: started
 
-  - name: seed the labpass db
-    ansible.builtin.shell: systemctl start labpass-seed
-
-
   handlers:
 
   - name: reload systemd
