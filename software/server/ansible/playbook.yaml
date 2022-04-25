@@ -71,6 +71,16 @@
       - reload systemd
       - restart dnsmasq
 
+  - name: Install labpass-seed systemd unit file
+    ansible.builtin.template:
+      src: templates/labpass-seed.service.tpl
+      dest: /etc/systemd/system/labpass-seed.service
+      owner: bin
+      group: root
+      mode: '0644'
+    notify:
+      - reload systemd
+
   - name: Install postgress systemd unit file
     ansible.builtin.template:
       src: templates/postgres.service.tpl
@@ -139,6 +149,12 @@
       masked: no
       state: started
 
+  - name: Enable service labpass-seed
+    ansible.builtin.systemd:
+      name: labpass
+      enabled: no
+      masked: no
+      state: started
 
   handlers:
 

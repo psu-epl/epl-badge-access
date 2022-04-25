@@ -17,7 +17,7 @@ ExecStart=/usr/bin/docker run \
   --name %p \
   --network host \
   ${IMAGE} \
-  php -S 10.0.0.2:80 -t /var/www/html
+  php -S {{ adminer.bind_address }}:{{ adminer.bind_port }} -t /var/www/html
 
 ExecStop=/usr/bin/docker stop %p
 ExecStopPost=-/usr/bin/docker rm %p
