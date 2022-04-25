@@ -79,6 +79,16 @@
       - reload systemd
       - restart dnsmasq
 
+  - name: Install hosts.dnsmasq file
+    ansible.builtin.template:
+      src: templates/hosts.dnsmasq.tpl
+      dest: /etc/hosts.dnsmasq
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - restart dnsmasq
+
   - name: Install labpass-seed systemd unit file
     ansible.builtin.template:
       src: templates/labpass-seed.service.tpl
@@ -157,12 +167,9 @@
       masked: no
       state: started
 
-  - name: Enable service labpass-seed
-    ansible.builtin.systemd:
-      name: labpass
-      enabled: no
-      masked: no
-      state: started
+  - name: seed the labpass db
+    ansible.builtin.shell: systemctl start labpass-seed
+
 
   handlers:
 
