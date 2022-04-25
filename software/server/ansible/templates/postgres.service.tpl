@@ -17,8 +17,8 @@ ExecStart=/usr/bin/docker run \
   --network host \
   -v /var/lib/postgresql/data:/var/lib/postgresql/data \
   -e "PGDATA=/var/lib/postgresql/data" \
-  -e "POSTGRES_PASSWORD=admin" \
-  ${IMAGE} --listen_addresses=127.0.0.1
+  -e "POSTGRES_PASSWORD={{ labpass.database_password }}" \
+  ${IMAGE} --listen_addresses={{ postgres.bind_address }}
 
 ExecStop=/usr/bin/docker stop %p
 ExecStopPost=-/usr/bin/docker rm %p

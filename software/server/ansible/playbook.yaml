@@ -2,43 +2,75 @@
 
 - name: Provision Labpass Server
   hosts: localhost
-  vars_files:
-    - variables.yaml
 
   tasks:
 
-  - name: 'Change time zone'
-    timezone:
-      name: "{{ntp.timezone}}"
-  
-  - name: 'Template out Netplan YAML to configure networking'
-    template:
-      src: ./templates/99_config.yaml.tpl
-      dest: /etc/netplan/99_config.yaml
-  
-  - name: 'Applying Netplan Configuration'
-    command: netplan apply
-    become: yes
-    become_method: sudo
-  
-  - name: Upgrade the OS (apt-get dist-upgrade)
-    apt:
-      upgrade: dist
-      update_cache: yes
-    become: yes
-  
-  - name: Update all packages to latest versions
-    apt:
-      name: "*"
-      state: latest
-      update_cache: yes
-    become: yes
-  
   - name: 'Install Docker'
     apt:
       name: docker.io
       state: present
   
+  - name: Write docker registry login
+    ansible.builtin.template:
+      src: templates/docker-config.json.tpl
+      dest: /root/.docker/config.json
+      owner: root
+      group: root
+      mode: '0600'
+    notify:
+      - restart docker
+
+  - name: 'Install hostapd'
+    apt:
+      name: hostapd
+      state: present
+
+  - name: Install hostapd.conf file
+    ansible.builtin.template:
+      src: templates/hostapd.conf.tpl
+      dest: /etc/hostapd/hostapd.conf
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - restart hostapd
+
+  - name: Install hostapd into /etc/default
+    ansible.builtin.template:
+      src: templates/hostapd.tpl
+      dest: /etc/default/hostapd
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - restart hostapd
+  
+  - name: 'Install dnsmasq'
+    apt:
+      name: dnsmasq
+      state: present
+  
+  - name: Install dnsmasq conf file
+    ansible.builtin.template:
+      src: templates/dnsmasq.conf.tpl
+      dest: /etc/dnsmasq.conf
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - restart dnsmasq
+
+  - name: Install dnsmasq unit file
+    ansible.builtin.template:
+      src: templates/dnsmasq.service.tpl
+      dest: /etc/systemd/system/dnsmasq.service
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - reload systemd
+      - restart dnsmasq
+
   - name: Install postgress systemd unit file
     ansible.builtin.template:
       src: templates/postgres.service.tpl
@@ -72,22 +104,39 @@
       - reload systemd
       - restart labpass
   
+  - name: Enable service hostapd and ensure it is not masked
+    ansible.builtin.systemd:
+      name: hostapd
+      enabled: yes
+      masked: no
+      state: started
+  
+  - name: Enable service dnsmasq and ensure it is not masked
+    ansible.builtin.systemd:
+      name: dnsmasq
+      enabled: yes
+      masked: no
+      state: started
+  
   - name: Enable service postgres and ensure it is not masked
     ansible.builtin.systemd:
       name: postgres
       enabled: yes
+      masked: no
       state: started
   
   - name: Enable service adminer and ensure it is not masked
     ansible.builtin.systemd:
       name: adminer
       enabled: yes
+      masked: no
       state: started
   
   - name: Enable service labpass
     ansible.builtin.systemd:
       name: labpass
       enabled: yes
+      masked: no
       state: started
 
 
@@ -114,3 +163,22 @@
       name: labpass
       enabled: yes
       state: restarted
+
+  - name: restart hostapd
+    ansible.builtin.systemd:
+      name: hostapd
+      enabled: yes
+      state: restarted
+  
+  - name: restart dnsmasq
+    ansible.builtin.systemd:
+      name: dnsmasq
+      enabled: yes
+      state: restarted
+  
+  - name: restart docker
+    ansible.builtin.systemd:
+      name: docker
+      enabled: yes
+      state: restarted
+  
