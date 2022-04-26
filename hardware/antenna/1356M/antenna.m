@@ -2,19 +2,22 @@ clear; clc;
 format shorteng;
 
 Fc = 13.56e6;
+w = 2 * pi * Fc;
 
-La = 850e-9;
-Ca = .5e-12;
+La = 3.65e-6;
+Ca = 2.4e-12;
 Ra = 1;
 
-L0 = 1e-6;
+L0 = .560e-6;
 Rmatch = 50;
+
+Q = 48.47;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 w = (2 * pi * Fc);
-Qa = (w * La) / (Ra);
-Rq = .5 * ( ( ( w * La)/35) - Ra );
+Qa = (w * La) / (Ra)
+Rq = .5 * ( ( ( w * La)/35) - Ra )
 
 Rd = 848e3;
 
