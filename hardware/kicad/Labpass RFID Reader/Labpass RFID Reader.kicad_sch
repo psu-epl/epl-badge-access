@@ -817,6 +817,9 @@
     (path "/3c921900-5c38-4cb2-a335-20316312b0c1/9e687c62-9616-49ce-85e8-e3a97973b29d"
       (reference "C21") (unit 1) (value "220p") (footprint "Capacitor_SMD:C_0603_1608Metric")
     )
+    (path "/3c921900-5c38-4cb2-a335-20316312b0c1/295ef628-c172-4ca6-b849-68bed9ee0fd3"
+      (reference "C22") (unit 1) (value "1n") (footprint "Capacitor_SMD:C_0603_1608Metric")
+    )
     (path "/7edac1e6-8b57-42c3-be27-8045b1a8bdad/99f661d1-3456-4a0d-b17d-af89509e5e5d"
       (reference "D1") (unit 1) (value "1N4148") (footprint "Diode_SMD:D_SOD-323F")
     )
