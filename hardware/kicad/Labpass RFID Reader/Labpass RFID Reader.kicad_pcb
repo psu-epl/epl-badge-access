@@ -78,7 +78,7 @@
       (mirror false)
       (drillshape 0)
       (scaleselection 1)
-      (outputdirectory "fab/gerber/")
+      (outputdirectory "../../../../../../../../../../../private/tmp/gerbers/")
     )
   )
 
