@@ -25,9 +25,9 @@
         (effects (font (size 1.27 1.27)) hide)
       )
       (symbol "adafruit_huzzah_32_0_0"
-        (pin input line (at 12.7 -22.86 180) (length 2.54)
-          (name "SCL" (effects (font (size 1.27 1.27))))
-          (number "22" (effects (font (size 1.27 1.27))))
+        (pin input line (at -12.7 2.54 0) (length 2.54)
+          (name "22" (effects (font (size 1.27 1.27))))
+          (number "22" (effects (font (size 1 1))))
         )
         (pin input line (at -12.7 -22.86 0) (length 2.54)
           (name "SDA" (effects (font (size 1.27 1.27))))
@@ -288,13 +288,12 @@
   (no_connect (at 144.78 129.54) (uuid 2e11f694-d2da-49f1-80e9-158209c1c547))
   (no_connect (at 144.78 127) (uuid 4bcfb059-ec92-437f-9bb2-bc0057d6f9e2))
   (no_connect (at 119.38 132.08) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae230))
-  (no_connect (at 119.38 134.62) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae230))
-  (no_connect (at 119.38 137.16) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae230))
-  (no_connect (at 119.38 129.54) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae230))
-  (no_connect (at 119.38 127) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae230))
-  (no_connect (at 144.78 137.16) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae230))
-  (no_connect (at 144.78 134.62) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae230))
-  (no_connect (at 144.78 132.08) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae230))
+  (no_connect (at 119.38 134.62) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae231))
+  (no_connect (at 119.38 137.16) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae232))
+  (no_connect (at 119.38 129.54) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae233))
+  (no_connect (at 119.38 127) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae234))
+  (no_connect (at 144.78 134.62) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae236))
+  (no_connect (at 144.78 132.08) (uuid e5cb938e-2170-4b3f-a2f6-79d8372ae237))
 
   (wire (pts (xy 124.46 73.66) (xy 111.76 73.66))
     (stroke (width 0) (type default) (color 0 0 0 0))
@@ -395,6 +394,10 @@
   (wire (pts (xy 170.18 119.38) (xy 195.58 119.38))
     (stroke (width 0) (type default) (color 0 0 0 0))
     (uuid 9beba979-37b6-4058-af81-00113ebf103c)
+  )
+  (wire (pts (xy 81.28 111.76) (xy 119.38 111.76))
+    (stroke (width 0) (type default) (color 0 0 0 0))
+    (uuid 9bf918ec-3e39-4bd9-ae34-8679b7a00071)
   )
   (wire (pts (xy 81.28 96.52) (xy 119.38 96.52))
     (stroke (width 0) (type default) (color 0 0 0 0))
@@ -556,7 +559,7 @@
     (property "Sheet file" "indicators.kicad_sch" (id 1) (at 53.34 122.5046 0)
       (effects (font (size 1.27 1.27)) (justify left top))
     )
-    (pin "buzzer" input (at 81.28 109.22 0)
+    (pin "BUZZER" input (at 81.28 109.22 0)
       (effects (font (size 1.27 1.27)) (justify right))
       (uuid 2d5884d9-b817-4bf5-aef1-27cb56d85052)
     )
@@ -583,6 +586,10 @@
     (pin "LED_2_B" input (at 81.28 93.98 0)
       (effects (font (size 1.27 1.27)) (justify right))
       (uuid d6fed8d5-1e70-47ed-abc3-96f4d364bb58)
+    )
+    (pin "EXT_RELAY" input (at 81.28 111.76 0)
+      (effects (font (size 1.27 1.27)) (justify right))
+      (uuid 6710a0c3-faa9-4e99-80d6-41eef9b97ff0)
     )
   )
 
@@ -681,6 +688,9 @@
     )
     (path "/7edac1e6-8b57-42c3-be27-8045b1a8bdad/aad5ff04-a4a0-4d10-b756-a845b8d01053"
       (reference "#PWR010") (unit 1) (value "GND") (footprint "")
+    )
+    (path "/0302516d-709c-49c5-8a36-06b29a93bc66/0d2206eb-5bd8-442d-b04e-a22ed24a7013"
+      (reference "#PWR011") (unit 1) (value "GND") (footprint "")
     )
     (path "/7edac1e6-8b57-42c3-be27-8045b1a8bdad/d661cc11-2696-47a1-a5ba-8072289e95c2"
       (reference "#PWR012") (unit 1) (value "GND") (footprint "")
@@ -813,6 +823,9 @@
     )
     (path "/7edac1e6-8b57-42c3-be27-8045b1a8bdad/a9256017-1126-40c6-9732-7c41f0a02b63"
       (reference "J3") (unit 1) (value "Conn_01x02") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Horizontal")
+    )
+    (path "/0302516d-709c-49c5-8a36-06b29a93bc66/feb7af07-00c5-44ae-98db-c56bb3db2efb"
+      (reference "J4") (unit 1) (value "Conn_01x02") (footprint "Capstone Footprint Library:Anytek NQ")
     )
     (path "/3c921900-5c38-4cb2-a335-20316312b0c1/e10d1f47-318e-4b6f-881f-5a81d1f14021"
       (reference "L2") (unit 1) (value "560n") (footprint "Inductor_SMD:L_1210_3225Metric")
