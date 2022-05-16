@@ -6,8 +6,8 @@
 
   (title_block
     (title "Labpass RFID Reader - MCU")
-    (date "2022-04-18")
-    (rev "0.1.0")
+    (date "2022-05-15")
+    (rev "1.0.0")
   )
 
   (lib_symbols
@@ -512,8 +512,8 @@
     (in_bom yes) (on_board yes)
     (uuid c4ac18a9-c23d-41f2-b747-59286aa6d5d4)
     (property "Reference" "U1" (id 0) (at 132.08 114.3 0))
-    (property "Value" "" (id 1) (at 132.08 142.24 0))
-    (property "Footprint" "" (id 2) (at 129.54 113.03 0)
+    (property "Value" "adafruit_huzzah_32" (id 1) (at 132.08 142.24 0))
+    (property "Footprint" "Capstone Footprint Library:adafruit_huzzah_32" (id 2) (at 129.54 113.03 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (id 3) (at 129.54 113.03 0)
