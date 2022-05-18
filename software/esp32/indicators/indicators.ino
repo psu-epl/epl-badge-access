@@ -7,7 +7,7 @@
 
   Some basic modifications were made by vseven, mostly commenting.
 */
-
+#define in4 34   //GPIO 34
 int authorized = 0;
 int id = 1;
 
@@ -27,7 +27,8 @@ void setup()
 {
   Serial.begin(115200);
   delay(10);
-  
+
+  pinMode(in4, INPUT);
   ledcAttachPin(ledR, 1); // assign RGB led pins to channels
   ledcAttachPin(ledG, 2);
   ledcAttachPin(ledB, 3);
@@ -38,6 +39,7 @@ void setup()
   ledcSetup(1, 12000, 8); // 12 kHz PWM, 8-bit resolution
   ledcSetup(2, 12000, 8);
   ledcSetup(3, 12000, 8);
+  authorized = in4;
 
   delay(10);
   pinMode(buzzer, OUTPUT); // Set buzzer - pin 4 as an output
@@ -111,7 +113,7 @@ void loop()
       digitalWrite(buzzer, LOW);
       delay(900);
     }
-    Serial.println("TEST: buzzed 3 times succesfully");
+    Serial.println("TEST: buzzed 3 times successfully");
     delay(5000);
   }
 }
