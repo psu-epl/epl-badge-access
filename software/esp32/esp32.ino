@@ -73,12 +73,12 @@ WiFiMulti WiFiMulti;
 
 void setup()
 {   
-  
   Serial.begin(115200);   //Open serial port and set data rate
   delay(10);
-
+  
   //***********GPIO Assignments*********************************
-/*  pinMode(in34, INPUT);
+/*
+  pinMode(in34, INPUT);
   pinMode(in36, INPUT);  
   pinMode(in39, INPUT);
   pinMode(out4, OUTPUT);

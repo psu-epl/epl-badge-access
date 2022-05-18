@@ -8,20 +8,16 @@
   Some basic modifications were made by vseven, mostly commenting.
 */
 
-int authorized = 1;
+int authorized = 0;
 int id = 1;
 
 // Set up the rgb led names
 uint8_t ledR = 13;  //Red
 uint8_t ledG = 12;  //Green
 uint8_t ledB = 33;  //Blue
-
 const int buzzer = 4; //buzzer to arduino pin 4
-
 uint8_t ledArray[3] = {1, 2, 3}; // three led channels
-
 const boolean invert = true; // set true if common anode, false if common cathode
-
 uint8_t color = 0;          // a value from 0 to 255 representing the hue
 uint32_t R, G, B;           // the Red Green and Blue color components
 uint8_t brightness = 255;  // 255 is maximum brightness, but can be changed.  Might need 256 for common anode to fully turn off.
@@ -30,13 +26,12 @@ uint8_t brightness = 255;  // 255 is maximum brightness, but can be changed.  Mi
 void setup()
 {
   Serial.begin(115200);
-
   delay(10);
-
+  
   ledcAttachPin(ledR, 1); // assign RGB led pins to channels
   ledcAttachPin(ledG, 2);
   ledcAttachPin(ledB, 3);
-
+  
   // Initialize channels
   // channels 0-15, resolution 1-16 bits, freq limits depend on resolution
   // ledcSetup(uint8_t channel, uint32_t freq, uint8_t resolution_bits);
@@ -45,145 +40,78 @@ void setup()
   ledcSetup(3, 12000, 8);
 
   delay(10);
-
   pinMode(buzzer, OUTPUT); // Set buzzer - pin 4 as an output
-
 }
 
 // void loop runs over and over again
-void loop()
-{
-  //Default state
-
-  default_state();
-  //authorize_student(id);
-
-  // ******Buzzer****************************
-  /*
-    if (<condition> != 0){
-      digitalWrite(buzzer, HIGH)
-    }
-    else{
-      digitalWrite(buzzer, LOW)
-    }
-  */
-
-  Serial.println("Send all LEDs a 255 and wait 2 seconds.");
+void loop() 
+{  
   // If your RGB LED turns off instead of on here you should check if the LED is common anode or cathode.
   // If it doesn't fully turn off and is common anode try using 256.
-  ledcWrite(1, 255);
-  /*ledcWrite(2, 255);
-    ledcWrite(3, 255);
+  //RGB <(LED No., Brightness)>
+  //LED No.: 1 = Red, 2 = Green, 3 = Blue.
+
+  //Uncomment to test RGB
+  /*
+    Serial.println("2 seconds delay between cycles.");
+    Serial.println("Red on.");
+    ledcWrite(1, 255);    //Red on
     delay(2000);
-    Serial.println("Send all LEDs a 0 and wait 2 seconds.");
-    ledcWrite(1, 0);
-    ledcWrite(2, 0);
-    ledcWrite(3, 0);
+    Serial.println("Red off.");
+    ledcWrite(1, 0);      //Red off
     delay(2000);
+
+    Serial.println("Green on.");
+    ledcWrite(2, 255);    //Green on
+    delay(2000);
+    Serial.println("Green off.");
+    ledcWrite(2, 0);      //Green off
+    delay(2000);
+
+    Serial.println("Blue on.");
+    ledcWrite(3, 255);    //Blue on
+    delay(2000);
+    Serial.println("Red off.");
+    ledcWrite(3, 0);      // Blue off
+    delay(500);
   */
-  /* Serial.println("Starting color fade loop.");
+  
+  //Default state
+  default_state();
 
-    for (color = 0; color < 255; color++) { // Slew through the color spectrum
-
-    //****************************************************************************************Function call hueToRGB(color, brightness);  // call function to convert hue to RGB **************************************************************
-
-    // write the RGB values to the pins
-    ledcWrite(1, R); // write red component to channel 1, etc.
-    ledcWrite(2, G);
-    ledcWrite(3, B);
-
-    delay(100); // full cycle of rgb over 256 colors takes 26 seconds
-    }*/
-
+  //Test authorization
+  while(authorized == 1){
+  authorize_student(id);
+  }
+ 
 }
 
-void default_state() {
-  Serial.println("Default");
+  void default_state() {
+  Serial.println("State: Idle.");
   ledcWrite(1, 255); //Red
   delay(2000);
 }
 
-/* void authorize_student(id){
-  
+  void authorize_student(int id){
   
   if (id == authorized) {
     Serial.println("Student authorized");
     ledcWrite(2, 255); //Green
 
     //Buzzer beep once
-    digtalWrite(buzzer, HIGH);
+    digitalWrite(buzzer, HIGH);
     Serial.println("buzz briefly");
     delay(100);
-    digtalWrite(buzzer, LOW);
+    digitalWrite(buzzer, LOW);
 
     //Buzzer beep 3 times
     for (int i = 0; i < 3; i++) {
-      digtalWrite(buzzer, HIGH);
+      digitalWrite(buzzer, HIGH);
       delay(100);
-      digtalWrite(buzzer, LOW);
+      digitalWrite(buzzer, LOW);
       delay(900);
     }
     Serial.println("TEST: buzzed 3 times succesfully");
     delay(5000);
   }
-}*/ 
-
-/*
-  // Courtesy http://www.instructables.com/id/How-to-Use-an-RGB-LED/?ALLSTEPS
-  // function to convert a color to its Red, Green, and Blue components.
-
-  void hueToRGB(uint8_t hue, uint8_t brightness)
-  {
-    uint16_t scaledHue = (hue * 6);
-    uint8_t segment = scaledHue / 256; // segment 0 to 5 around the
-                                            // color wheel
-    uint16_t segmentOffset =
-      scaledHue - (segment * 256); // position within the segment
-
-    uint8_t complement = 0;
-    uint16_t prev = (brightness * ( 255 -  segmentOffset)) / 256;
-    uint16_t next = (brightness *  segmentOffset) / 256;
-
-    if(invert)
-    {
-      brightness = 255 - brightness;
-      complement = 255;
-      prev = 255 - prev;
-      next = 255 - next;
-    }
-
-    switch(segment ) {
-    case 0:      // red
-        R = brightness;
-        G = next;
-        B = complement;
-    break;
-    case 1:     // yellow
-        R = prev;
-        G = brightness;
-        B = complement;
-    break;
-    case 2:     // green
-        R = complement;
-        G = brightness;
-        B = next;
-    break;
-    case 3:    // cyan
-        R = complement;
-        G = prev;
-        B = brightness;
-    break;
-    case 4:    // blue
-        R = next;
-        G = complement;
-        B = brightness;
-    break;
-   case 5:      // magenta
-    default:
-        R = brightness;
-        G = complement;
-        B = prev;
-    break;
-    }
-  }
-*/
+}
