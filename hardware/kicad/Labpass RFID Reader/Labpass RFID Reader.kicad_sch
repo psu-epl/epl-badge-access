@@ -816,7 +816,7 @@
       (reference "D1") (unit 1) (value "1N4148") (footprint "Diode_SMD:D_SOD-323F")
     )
     (path "/3c921900-5c38-4cb2-a335-20316312b0c1/80f4181c-1361-4a50-8a42-29c05a576eb5"
-      (reference "J1") (unit 1) (value "Conn_01x03_Male") (footprint "Connector_PinHeader_2.54mm:PinHeader_2x02_P2.54mm_Horizontal")
+      (reference "J1") (unit 1) (value "Conn_01x04") (footprint "Connector_PinHeader_2.54mm:PinHeader_2x02_P2.54mm_Horizontal")
     )
     (path "/0302516d-709c-49c5-8a36-06b29a93bc66/da07b1c2-c241-4491-9261-cd2de92d1976"
       (reference "J2") (unit 1) (value "Conn_01x08") (footprint "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Horizontal")
