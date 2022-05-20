@@ -15,13 +15,13 @@ int processing = 1;
 //int _id = 1;
 
 // Set up the rgb led names
-uint8_t ledR = 13;  //Red
-uint8_t ledG = 12;  //Green
-uint8_t ledB = 33;  //Blue
+uint8_t ledR_status = 13;  //Red_status
+uint8_t ledG_status = 12;  //Green_status
+uint8_t ledB_status = 33;  //Blue_status
 
-uint8_t 14  //GPIO 14    Red_power
-uint8_t 15  //GPIO 15    Green_power
-uint8_t 21  //GPIO 21    Blue_power
+uint8_t ledR_power = 14  //GPIO 14    Red_power
+uint8_t ledR_power = 15  //GPIO 15    Green_power
+uint8_t ledR_power = 21  //GPIO 21    Blue_power
 
 const int buzzer = 4; //buzzer to arduino pin 4
 uint8_t ledArray[3] = {1, 2, 3}; // three led channels
@@ -35,11 +35,6 @@ void setup()
 {
   Serial.begin(115200);
   delay(10);
-
-  
-  ledcAttachPin(ledR, 1); // assign RGB led pins to channels
-  ledcAttachPin(ledG, 2);
-  ledcAttachPin(ledB, 3);
   
   // Initialize channels
   // channels 0-15, resolution 1-16 bits, freq limits depend on resolution
@@ -127,9 +122,9 @@ void loop()
   }
   
 
-  void uauthorize_user(){
+  void uauthorize_student(){
       
-    Serial.println("User uauthorized.");
+    Serial.println("Student uauthorized.");
     ledcWrite(2, 0); //Green off
 
     delay(100);
