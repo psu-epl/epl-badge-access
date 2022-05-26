@@ -3,13 +3,13 @@
 using namespace team17;
 using namespace std;
 
-LowFrequency::LowFrequency(QueueHandle_t tagQueue, uint8_t din) : din_(din),
-                                                        state_(StateName::idle),
-                                                        edgeCount_(0),
-                                                        header_(std::bitset<HEADER_BIT_SIZE>()),
-                                                        tag_(Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE)),
-                                                        edgeQueue_(NULL),
-                                                        tagQueue_(tagQueue)
+LowFrequency::LowFrequency(esp_event_loop_handle_t event_loop, uint8_t din) : din_(din),
+                                                                              state_(StateName::idle),
+                                                                              edgeCount_(0),
+                                                                              header_(std::bitset<HEADER_BIT_SIZE>()),
+                                                                              tag_(Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE)),
+                                                                              edgeQueue_(NULL),
+                                                                              event_loop_(event_loop)
 
 {
     pinMode(TX, OUTPUT);
@@ -107,10 +107,10 @@ void LowFrequency::edge(uint32_t edge)
 
                 // this edge is part of a group. If all 14 bits in our header are
                 // set, it means this bit is bit 15, which is half of the valid start
-                // marker (the other half is 15 0s)
+                // marker (the other half is 15 0s which would have come before this)
                 if (header_.all())
                 {
-                    // we got our header, start expecting 15 zeros
+                    // we got our header
                     header_.reset();
                     state_ = StateName::started;
                     tag_.addBit(0);
@@ -150,6 +150,7 @@ void LowFrequency::edge(uint32_t edge)
                 if ( tag_.getBitCount() == TAG_BIT_SIZE )
                 {
                     Tag *newTag = new Tag(Tag::TagType::LowFrequency, TAG_BIT_SIZE, *(tag_.getData()));
+                    esp_event_post_to(event_loop_, LabpassLFReaderEvent, labpassLFReaderEventType::shortBadge, (void *) newTag->getData, sizeof(&fakeBadge), portMAX_DELAY);
                     xQueueSend(tagQueue_, &newTag, portMAX_DELAY);
                     resetState();
                 }

@@ -1,0 +1,21 @@
+#pragma once
+
+#include <device.h>
+#include <WiFi.h>
+#include <tag.h>
+#include <client.h>
+
+class Device;
+
+class DeviceState
+{
+public:
+    virtual void enter(Device *device) = 0;
+    virtual void exit(Device *device) = 0;
+
+    virtual DeviceState *badgeEvent(Device *device, uint32_t eventType, String *tag) = 0;
+    virtual DeviceState * wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info) = 0;
+
+    virtual String name() = 0;
+    virtual ~DeviceState(){};
+};

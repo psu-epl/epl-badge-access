@@ -1,8 +1,9 @@
 #pragma once
+#include <SPI.h>
 #include <Arduino.h>
 #include "MFRC522.h"
 #include <optional>
-#include "tag/tag.h"
+#include <tag.h>
 
 namespace team17 {
 
