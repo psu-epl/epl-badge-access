@@ -1,4 +1,4 @@
-#include "high_freq.h"
+#include <high_freq.h>
 
 using namespace team17;
 using namespace std;
@@ -17,18 +17,22 @@ void HighFrequency::start()
 {
     SPI.begin();         // Init SPI bus
     mfrc522_.PCD_Init(); // Init MFRC522 card
-    mfrc522_.PCD_SetAntennaGain(ANTENNA_GAIN);
-    xTaskCreate(
-        wakeupTagTask,
-        "HF Tag Wakeup",
-        4096,
-        this,
-        5,
-        NULL);
+    // mfrc522_.PCD_SetAntennaGain(ANTENNA_GAIN);
+    // xTaskCreate(
+    //     wakeupTagTask,
+    //     "HF Tag Wakeup",
+    //     4096,
+    //     this,
+    //     5,
+    //     NULL);
 
-    byte gain = mfrc522_.PCD_GetAntennaGain();
-    log_i("antenna gain byte: %d", gain);
-    log_i("starting hf rx loop");
+    // byte gain = mfrc522_.PCD_GetAntennaGain();
+    // log_i("antenna gain byte: %d", gain);
+    // log_i("starting hf rx loop");
+
+    esp_err_t foo = mfrc522_.PCD_PerformSelfTest();
+    log_e("Self Test: %s", esp_err_to_name(foo));
+    mfrc522_.PCD_DumpVersionToSerial();
 }
 
 void HighFrequency::wakeupTagTask(void *p)

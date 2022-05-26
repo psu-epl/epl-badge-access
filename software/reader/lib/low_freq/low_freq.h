@@ -5,7 +5,8 @@
 #include <string>
 #include <optional>
 #include "driver/mcpwm.h"
-#include "tag/tag.h"
+#include "tag.h"
+#include "esp_event.h"
 
 #include "driver/ledc.h"
 
@@ -25,6 +26,14 @@
 #define PWM_DUTYCYCLE 0
 #define PWM_RESOLUTION 1
 
+ESP_EVENT_DECLARE_BASE(LabpassLFReaderEvent);
+
+enum labpassLFReaderEventType
+{
+    shortBadge,
+    longBadge
+};
+
 namespace team17 {
 
     enum class StateName
@@ -39,7 +48,7 @@ namespace team17 {
     {
     public:
         static bool edgeCallback(mcpwm_unit_t mcpwm, mcpwm_capture_channel_id_t cap_channel, const cap_event_data_t *edata, void *user_data);
-        LowFrequency(QueueHandle_t tagQueue, uint8_t din);
+        LowFrequency(esp_event_loop_handle_t event_loop, uint8_t din);
         esp_err_t start();
         void edge(uint32_t edge);
         QueueHandle_t getEdgeQueue();
@@ -52,10 +61,10 @@ namespace team17 {
         std::bitset<HEADER_BIT_SIZE> header_;
         Tag tag_;
         QueueHandle_t edgeQueue_;
-        QueueHandle_t tagQueue_;
 
         static void edgeTask(void *p);
         esp_err_t carrierOn();
         void resetState();
+        esp_event_loop_handle_t event_loop_;
     };
 }
