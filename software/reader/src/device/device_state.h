@@ -1,9 +1,9 @@
 #pragma once
 
-#include <device.h>
+#include "device.h"
 #include <WiFi.h>
 #include <tag.h>
-#include <client.h>
+#include "labpass_client/client.h"
 
 class Device;
 

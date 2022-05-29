@@ -2,7 +2,7 @@
 #include <Arduino.h>
 
 #include <esp_event.h>
-#include <labpass_event.h>
+#include "labpass_event/labpass_event.h"
 
 struct AuthReqResp
 {
@@ -36,8 +36,7 @@ struct PingReqResp
 class LabpassClient
 {
 public:
-    LabpassClient(String &baseURL, String &stationId, String &token,
-                  esp_event_loop_handle_t &loop_handle);
+    LabpassClient(String &baseURL, String &stationId, String &token);
 
     void authorize(AuthReqResp * authReqResp);
     void enroll(EnrollReqResp * enrollReqResp);

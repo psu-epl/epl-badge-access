@@ -1,6 +1,6 @@
 #pragma once
 #include <Arduino.h>
-#include "esp_event.h"
+#include <esp_event.h>
 
 ESP_EVENT_DECLARE_BASE(LabpassFakeReaderEvent);
 

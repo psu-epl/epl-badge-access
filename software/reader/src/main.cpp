@@ -1,55 +1,50 @@
-#include "device.h"
-#include "device_state_impl.h"
-#include <client.h>
-#include <low_freq.h>
 #include <Arduino.h>
+#include "low_freq_impl/low_freq_impl.h"
+#include <config.h>
 
-#include <WiFi.h>
+LowFrequencyImpl *lf;
+esp_event_loop_handle_t loopHandle;
 
-String ssid = "7yv89tndqr_2g";
-String password = "exoticcarrot227";
-String baseURL = "http://192.168.1.63";
-String stationID = "72a72777-e7da-4837-a870-2f9afdbcffe8";
-String jwtToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyODQyMDM1MTgsImZ1bGxOYW1lIjoic29sZGVyaW5nLWlyb24iLCJpZCI6IjcyYTcyNzc3LWU3ZGEtNDgzNy1hODcwLTJmOWFmZGJjZmZlOCIsInJvbGUiOiJzdGF0aW9uIn0.J5OE_OtbA2wjvY3bggsnP8iFVux212m5YhAGRu5hiKI";
-esp_event_loop_handle_t loop_handle;
-
-Device *device;
-LabpassClient *client;
+void lfEvent(void *event_handler_arg, esp_event_base_t event_base, int event_id, void *event_data);
 
 void setup()
 {
-  esp_event_loop_args_t loop_args = {
-      .queue_size = 5,
-      .task_name = "labpass_loop_task",
-      .task_priority = uxTaskPriorityGet(NULL),
-      .task_stack_size = 3072,
-      .task_core_id = tskNO_AFFINITY};
+    Serial.begin(115200);
+    esp_event_loop_args_t * loop_args = new esp_event_loop_args_t{
+        .queue_size = 5,
+        .task_name = "labpass_loop_task",
+        .task_priority = uxTaskPriorityGet(NULL),
+        .task_stack_size = 3072,
+        .task_core_id = tskNO_AFFINITY};
 
-  esp_event_loop_create(&loop_args, &loop_handle);
+    esp_event_loop_create(loop_args, &loopHandle);
 
-  client = new LabpassClient(baseURL, stationID, jwtToken, loop_handle);
-  device = new Device(ssid, password, loop_handle, client);
+    esp_event_handler_register_with(
+        loopHandle, 
+        LabpassLFReaderEvent, 
+        ESP_EVENT_ANY_ID, 
+        lfEvent, 
+        NULL);
 
-  Serial.begin(115200);
+    lf = new LowFrequencyImpl(loopHandle, LOW_FREQUENCY_DATA_IN);
 
-  device->start();
-
-  delay(10000);
-
-  String * badge = new String("1390094");
-
-  log_i("posting badge to event loop: %s", badge->c_str());
-
-  esp_event_post_to(loop_handle, LabpassFakeReaderEvent, labpassFakeReaderEventType::shortBadge, badge, sizeof(*badge), portMAX_DELAY);
-
-  delay(10000);
-
-  badge = new String("1390094");
-
-  esp_event_post_to(loop_handle, LabpassFakeReaderEvent, labpassFakeReaderEventType::shortBadge, &badge, sizeof(&badge), portMAX_DELAY);
+    lf->start();
 }
 
 void loop()
 {
-  delay(1000);
+    delay(5000);
+}
+
+void lfEvent(void *event_handler_arg, esp_event_base_t event_base, int event_id, void *event_data)
+{
+    Tag *tag = (Tag *)event_data;
+    switch (event_id)
+    {
+    case LowFrequencyImpl::labpassLFReaderEventType::longBadge:
+        Serial.printf("LF tag, long badge, facility: %d, id: %d\n", tag->lfTag.facility, tag->lfTag.id);
+        break;
+    case LowFrequencyImpl::labpassLFReaderEventType::shortBadge:
+        Serial.printf("LF tag short badge, facility: %d, id: %d\n", tag->lfTag.facility, tag->lfTag.id);    
+    }
 }

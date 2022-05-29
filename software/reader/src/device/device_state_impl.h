@@ -3,7 +3,7 @@
 #include "device_state.h"
 #include "device.h"
 #include <unistd.h>
-#include <client.h>
+#include "labpass_client/client.h"
 
 class DeviceNetReset : public DeviceState
 {
