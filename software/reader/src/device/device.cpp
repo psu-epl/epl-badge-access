@@ -1,20 +1,22 @@
 #include "device.h"
 
-ESP_EVENT_DEFINE_BASE(LabpassClientEvent);
-ESP_EVENT_DEFINE_BASE(LabpassFakeReaderEvent);
+ESP_EVENT_DEFINE_BASE(LabpassEvent);
 
 #define MAX_BACKOFF 30000
 
-Device::Device(const String &ssid, const String &password, esp_event_loop_handle_t loop_handle, LabpassClient *client) : ssid_(ssid),
-                                                                                                                         password_(password),
-                                                                                                                         mutex_(xSemaphoreCreateMutex()),
-                                                                                                                         backoff_(0),
-                                                                                                                         loop_handle_(loop_handle),
-                                                                                                                         client_(client),
-                                                                                                                         currentState_(&DeviceInit::getInstance())
+Device::Device(const String &ssid, const String &password, esp_event_loop_handle_t loop_handle, 
+    LabpassClient *client, Indicators * indicators, String stationID) : ssid_(ssid),
+                                                      password_(password),
+                                                      mutex_(xSemaphoreCreateMutex()),
+                                                      backoff_(0),
+                                                      loop_handle_(loop_handle),
+                                                      client_(client),
+                                                      currentState_(&DeviceInit::getInstance()),
+                                                      indicators_(indicators),
+                                                      stationID_(stationID)
 
 {
-    esp_event_handler_register_with(loop_handle_, LabpassFakeReaderEvent, ESP_EVENT_ANY_ID, &Device::labpassFakeReaderEventHdr, (void *)this);
+    esp_event_handler_register_with(loop_handle_, LabpassEvent, ESP_EVENT_ANY_ID, &Device::labpassReaderEventHdr, (void *)this);
     WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info)
                  { this->wifiEventHdr(event, info); });
 }
@@ -59,19 +61,16 @@ esp_event_loop_handle_t & Device::getEventLoop()
     return loop_handle_;
 }
 
-void Device::labpassFakeReaderEventHdr(void *event_handler_arg, esp_event_base_t event_base, int event_id, void *event_data)
+void Device::labpassReaderEventHdr(void *event_handler_arg, esp_event_base_t event_base, int event_id, void *event_data)
 {
     Device *device = (Device *)event_handler_arg;
 
-    String *foo = (String *)event_data;
-    log_i("fake reader event handler, tag: %s", foo->c_str());
-    log_i("fake reader event handler, tag: %s", ((String *) event_data)->c_str());
-    log_i("fake reader event handler, tag: %s", ((String *)event_data)->c_str());
+    Tag *tag = (Tag *)event_data;
 
     DeviceState * nextState = device->getCurrentState()->badgeEvent(
         (Device *) event_handler_arg, 
         event_id, 
-        (String *) event_data);
+        (Tag *) event_data);
 
     if (nextState)
     {

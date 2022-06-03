@@ -1,6 +1,5 @@
 #pragma once
 #include <Arduino.h>
-
 #include <esp_event.h>
 #include "labpass_event/labpass_event.h"
 

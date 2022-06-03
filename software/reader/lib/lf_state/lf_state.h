@@ -17,15 +17,13 @@ public:
     {
         E0001,
         E001,
-        E0011,
         E01,
-        E011,
         E1,
     };
 
     virtual void enter(LowFrequency *lf) = 0;
     virtual void exit(LowFrequency *lf) = 0;
-    virtual LFState *edgeEvent(LowFrequency *lf, EdgeType edgeType) = 0;
+    virtual void edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState) = 0;
 
     virtual string name() = 0;
     virtual ~LFState(){};

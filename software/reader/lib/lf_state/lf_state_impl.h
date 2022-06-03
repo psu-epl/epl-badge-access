@@ -15,7 +15,7 @@ class LFStateSync : public LFState
 public:
     void enter(LowFrequency * lf);
     void exit(LowFrequency * lf);
-    LFState *edgeEvent(LowFrequency * lf, EdgeType edgeType);
+    void edgeEvent(LowFrequency * lf, EdgeType edgeType, LFState **outNextState);
     static LFState &getInstance();
     string name();
 
@@ -31,7 +31,7 @@ class LFStatePadding : public LFState
 public:
     void enter(LowFrequency * lf);
     void exit(LowFrequency * lf);
-    LFState *edgeEvent(LowFrequency *lf, EdgeType edgeType);
+    void edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState);
 
     static LFState &getInstance();
     string name();
@@ -50,7 +50,7 @@ class LFStatePayload : public LFState
 public:
     void enter(LowFrequency * lf);
     void exit(LowFrequency * lf);
-    LFState *edgeEvent(LowFrequency * lf, EdgeType edgeType);
+    void edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState);
 
     static LFState &getInstance();
     string name();
