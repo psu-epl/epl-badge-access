@@ -27,9 +27,9 @@ string LFStateSync::name()
     return string("StateSync");
 }
 
-LFState *LFStateSync::edgeEvent(LowFrequency *lf, EdgeType edgeType)
+void LFStateSync::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState)
 {
-    LFState *nextState = NULL;
+    *outNextState = NULL;
 
     switch (edgeType)
     {
@@ -37,10 +37,10 @@ LFState *LFStateSync::edgeEvent(LowFrequency *lf, EdgeType edgeType)
             header_ = 0b00000100;
             break;
         case E001:
-            nextState = &LFStateSync::getInstance();
+            *outNextState = &LFStateSync::getInstance();
             break;
         case E01:
-            nextState = &LFStateSync::getInstance();
+            *outNextState = &LFStateSync::getInstance();
             break;
         case E1:
             if (header_ == 0b00000100)
@@ -49,18 +49,16 @@ LFState *LFStateSync::edgeEvent(LowFrequency *lf, EdgeType edgeType)
             }
             else if (header_ == 0b00000110)
             {
-                nextState = &LFStatePadding::getInstance();
+                *outNextState = &LFStatePadding::getInstance();
             }
             else
             {
-                nextState = &LFStateSync::getInstance();
+                *outNextState = &LFStateSync::getInstance();
             }
             break;
         default:
-            nextState = &LFStateSync::getInstance();
+            *outNextState = &LFStateSync::getInstance();
     }
-
-    return nextState;
 }
 
 /******************************************************************************
@@ -90,33 +88,31 @@ string LFStatePadding::name()
     return string("StatePadding");
 }
 
-LFState *LFStatePadding::edgeEvent(LowFrequency *lf, EdgeType edgeType)
+void LFStatePadding::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState)
 {
-    LFState *nextState = NULL;
+    *outNextState = NULL;
 
     switch(edgeType)
     {
     case E0001:
-        nextState = &LFStateSync::getInstance();
+        *outNextState = &LFStateSync::getInstance();
         break;
     case E001:
-        nextState = &LFStateSync::getInstance();
+        *outNextState = &LFStateSync::getInstance();
         break;
     case E01:
         zerosCount_++;
         if (zerosCount_ == 8)
         {
-            nextState = &LFStatePayload::getInstance();
+            *outNextState = &LFStatePayload::getInstance();
         }
         break;
     case E1:
-        nextState = &LFStateSync::getInstance();
+        *outNextState = &LFStateSync::getInstance();
         break;
     default:
-        nextState = &LFStateSync::getInstance();
+        *outNextState = &LFStateSync::getInstance();
     }
-
-    return nextState;
 }
 
 /******************************************************************************
@@ -148,14 +144,14 @@ string LFStatePayload::name()
     return string("StatePayload");
 }
 
-LFState *LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType)
+void LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState)
 {
-    LFState *nextState = NULL;
+    *outNextState = NULL;
 
     switch(edgeType)
     {
     case E0001:
-        nextState = &LFStateSync::getInstance();
+        *outNextState = &LFStateSync::getInstance();
         break;
     case E001:
         payload_[pos_--] = 0;
@@ -170,17 +166,17 @@ LFState *LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType)
             Tag * tag = new Tag;
             if(checkParity(tag))
             {
-                lf->sendTag(tag);
-                nextState = &LFStateSync::getInstance();
+                lf->sendTag(*tag);
+                *outNextState = &LFStateSync::getInstance();
             }
             else
             {
-                nextState = &LFStateSync::getInstance();
+                *outNextState = &LFStateSync::getInstance();
             }
         }
         else if (pos_ > payload_.size() -1)
         {
-            nextState = &LFStateSync::getInstance();
+            *outNextState = &LFStateSync::getInstance();
         }
         break;
     case E01:
@@ -195,17 +191,17 @@ LFState *LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType)
             Tag *tag = new Tag;
             if (checkParity(tag))
             {
-                lf->sendTag(tag);
-                nextState = &LFStateSync::getInstance();
+                lf->sendTag(*tag);
+                *outNextState = &LFStateSync::getInstance();
             }
             else
             {
-                nextState = &LFStateSync::getInstance();
+                *outNextState = &LFStateSync::getInstance();
             }
         }
         else if (pos_ > payload_.size() - 1)
         {
-            nextState = &LFStateSync::getInstance();
+            *outNextState = &LFStateSync::getInstance();
         }
         break;
     case E1:
@@ -219,24 +215,23 @@ LFState *LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType)
             Tag *tag = new Tag;
             if (checkParity(tag))
             {
-                lf->sendTag(tag);
-                nextState = &LFStateSync::getInstance();
+                lf->sendTag(*tag);
+                *outNextState = &LFStateSync::getInstance();
             }
             else
             {
-                nextState = &LFStateSync::getInstance();
+                *outNextState = &LFStateSync::getInstance();
             }
         }
         else if (pos_ > payload_.size() - 1)
         {
-            nextState = &LFStateSync::getInstance();
+            *outNextState = &LFStateSync::getInstance();
         }
         break;
-            nextState = &LFStateSync::getInstance();
+        *outNextState = &LFStateSync::getInstance();
     default:
-        nextState = &LFStateSync::getInstance();
+        *outNextState = &LFStateSync::getInstance();
     }
-    return nextState;
 }
 
 bool LFStatePayload::checkParity(Tag *tag)

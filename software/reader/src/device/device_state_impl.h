@@ -10,7 +10,7 @@ class DeviceNetReset : public DeviceState
 public:
     void enter(Device *device);
     void exit(Device *device);
-    DeviceState *badgeEvent(Device *device, uint32_t eventType, String *tag);
+    DeviceState *badgeEvent(Device *device, esp_event_base_t eventBase, uint32_t eventType, Tag *tag);
     DeviceState *wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info);
 
     static DeviceState &getInstance();
@@ -27,7 +27,7 @@ class DeviceInit : public DeviceState
 public:
     void enter(Device *device);
     void exit(Device *device);
-    DeviceState *  badgeEvent(Device *device, uint32_t eventType,String *tag);
+    DeviceState *  badgeEvent(Device *device, esp_event_base_t eventBase, uint32_t eventType,Tag *tag);
     DeviceState *  wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info);
 
     static DeviceState &getInstance();
@@ -44,7 +44,7 @@ class DeviceAPConnect : public DeviceState
 public:
     void enter(Device *device);
     void exit(Device *device);
-    DeviceState *  badgeEvent(Device *device, uint32_t eventType,String *tag);
+    DeviceState *  badgeEvent(Device *device, esp_event_base_t eventBase, uint32_t eventType,Tag *tag);
     DeviceState *  wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info);
     static DeviceState &getInstance();
     String name();
@@ -60,7 +60,7 @@ class DeviceIPAddress : public DeviceState
 public:
     void enter(Device *device);
     void exit(Device *device);
-    DeviceState *badgeEvent(Device *device, uint32_t eventType, String *tag);
+    DeviceState *badgeEvent(Device *device, esp_event_base_t eventBase, uint32_t eventType, Tag *tag);
     DeviceState *  wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info);
     static DeviceState &getInstance();
     String name();
@@ -76,7 +76,7 @@ class DeviceIdle : public DeviceState
 public:
     void enter(Device *device);
     void exit(Device *device);
-    DeviceState *badgeEvent(Device *device, uint32_t eventType, String *tag);
+    DeviceState *badgeEvent(Device *device, esp_event_base_t eventBase, uint32_t eventType, Tag *tag);
     DeviceState *  wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info);
     static DeviceState &getInstance();
     String name();
@@ -92,7 +92,7 @@ class DeviceUserActive : public DeviceState
 public:
     void enter(Device *device);
     void exit(Device *device);
-    DeviceState *badgeEvent(Device *device, uint32_t eventType, String *tag);
+    DeviceState *badgeEvent(Device *device, esp_event_base_t eventBase, uint32_t eventType, Tag *tag);
     DeviceState *wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info);
     static DeviceState &getInstance();
     String name();
@@ -108,7 +108,7 @@ class DeviceManagerActive : public DeviceState
 public:
     void enter(Device *device);
     void exit(Device *device);
-    DeviceState *badgeEvent(Device *device, uint32_t eventType, String *tag);
+    DeviceState *badgeEvent(Device *device, esp_event_base_t eventBase, uint32_t eventType, Tag *tag);
     DeviceState *wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info);
     static DeviceState &getInstance();
     String name();
@@ -124,7 +124,7 @@ class DeviceEnroll : public DeviceState
 public:
     void enter(Device *device);
     void exit(Device *device);
-    DeviceState *badgeEvent(Device *device, uint32_t eventType, String *tag);
+    DeviceState *badgeEvent(Device *device, esp_event_base_t eventBase, uint32_t eventType, Tag *tag);
     DeviceState *wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info);
     static DeviceState &getInstance();
     String name();

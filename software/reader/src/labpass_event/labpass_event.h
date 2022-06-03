@@ -1,9 +1,15 @@
 #pragma once
 #include <esp_event.h>
 
-struct LabpassEvent
-{
-    esp_event_base_t eventBase;
-    int event_type;
-    void *event_data;
+ESP_EVENT_DECLARE_BASE(LabpassReaderEvent);
+
+class LabpassEvent {
+public:
+    enum Reader
+    {
+        ShortLFBadge,
+        LongLFBadge,
+        ShortHFBadge,
+        LongHFBadge
+    };
 };
