@@ -1,4 +1,4 @@
-#include <client.h>
+#include "client.h"
 #include "ArduinoJson.h"
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -7,9 +7,8 @@
 #define ENROLL_PATH "/api/v1.0/enroll"
 #define PING_PATH "/api/v1.0/ping"
 
-LabpassClient::LabpassClient(String &baseURL, String &stationId, String &token,
-                             esp_event_loop_handle_t & loop_handle) : baseURL_(baseURL),
-                                                                    token_(token)
+LabpassClient::LabpassClient(String &baseURL, String &stationId, String &token) : baseURL_(baseURL),
+                                                                                  token_(token)
 {
 
 }
@@ -113,7 +112,7 @@ void LabpassClient::enroll(EnrollReqResp * enrollReqResp)
 
         enrollReqResp->isError = false;
         enrollReqResp->isEnrolled = doc["is_enrolled"].as<String>();
-        enrollReqResp->inService = doc['in_service'].as<String>();
+        enrollReqResp->inService = doc["in_service"].as<String>();
         enrollReqResp->badgeId = doc["badge_id"].as<String>();
         enrollReqResp->managerId = doc["manager_id"].as<bool>();
         enrollReqResp->stationId = doc["station_id"].as<String>();

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <device_state.h>
+#include "device_state.h"
 #include <unistd.h>
 #include <WiFi.h>
-#include <client.h>
+#include "labpass_client/client.h"
 #include <unistd.h>
-#include <device_state_impl.h>
-#include <fake_reader.h>
-#include <labpass_event.h>
+#include "device_state_impl.h"
+#include "fake_reader/fake_reader.h"
+#include "labpass_event/labpass_event.h"
 
 class DeviceState;
 

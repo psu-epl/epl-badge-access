@@ -1,38 +1,16 @@
 #pragma once
+#include <unistd.h>
 
-#include <vector>
-#include <stdint.h>
-#include <string>
+struct LFTag {
+    uint32_t facility;
+    uint32_t id;
+};
 
-#define MAX_TAG_BYTES 128 // 1024 bit
-typedef int tag_err_t;
+struct HFTag {
+    uint32_t uuid;
+};
 
-namespace team17
-{
-
-    class Tag
-    {
-
-    public:
-        enum TagType
-        {
-            LowFrequency,
-            HighFrequency
-        };
-
-        Tag(TagType tagType, size_t length);
-        Tag(TagType tagType, size_t length, std::vector<uint8_t> data);
-        size_t getBitCount();
-        std::vector<uint8_t> * getData();
-        tag_err_t addBit(uint8_t b);
-        tag_err_t addByte(uint8_t b);
-        std::string getType();
-        void reset();
-
-    private:
-        TagType type_;
-        uint16_t length_;
-        std::vector<uint8_t> data_;
-        size_t bitCount_;
-    };
-}
+union Tag {
+    LFTag lfTag;
+    HFTag hfTag;
+};
