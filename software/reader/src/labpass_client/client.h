@@ -20,8 +20,8 @@ struct EnrollReqResp
     bool isError;
     bool isEnrolled;
     bool inService;
-    String managerId;
-    String badgeId;
+    String managerBadgeId;
+    String userBadgeId;
     String stationId;
 };
 
@@ -35,13 +35,13 @@ struct PingReqResp
 class LabpassClient
 {
 public:
-    LabpassClient(String &baseURL, String &stationId, String &token);
+    LabpassClient(String *baseURL, String *token);
 
     void authorize(AuthReqResp * authReqResp);
     void enroll(EnrollReqResp * enrollReqResp);
     void ping(PingReqResp * pingReqResp);
 
 private:
-    String &baseURL_;
-    String &token_;
+    String baseURL_;
+    String token_;
 };

@@ -7,8 +7,8 @@
 #define ENROLL_PATH "/api/v1.0/enroll"
 #define PING_PATH "/api/v1.0/ping"
 
-LabpassClient::LabpassClient(String &baseURL, String &stationId, String &token) : baseURL_(baseURL),
-                                                                                  token_(token)
+LabpassClient::LabpassClient(String *baseURL, String *token) : baseURL_(*baseURL),
+                                                               token_(*token)
 {
 
 }
@@ -20,8 +20,6 @@ void LabpassClient::authorize(AuthReqResp * authReqResp)
     authReqResp->isLoggedOut = false;
     authReqResp->inService = false;
 
-    log_i("authorize backside, tag: %s", authReqResp->badgeId);
-
     HTTPClient http;
 
     String url = baseURL_ + AUTHORIZE_PATH;
@@ -32,15 +30,17 @@ void LabpassClient::authorize(AuthReqResp * authReqResp)
         return;
     }
 
-    StaticJsonDocument<256> body;
-    body["badge_id"] = authReqResp->badgeId;
-    body["station_id"] = authReqResp->stationId;
+    DynamicJsonDocument doc(512);
+    doc["badge_id"] = authReqResp->badgeId;
+    doc["station_id"] = authReqResp->stationId;
 
     String bodyString;
-    serializeJson(body, bodyString);
+    serializeJson(doc, bodyString);
 
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("Authorization", token_);
+    http.setAuthorizationType("Bearer");
+    http.setAuthorization(token_.c_str());
+    http.setReuse(false);
 
     log_i("sending: %s", bodyString.c_str());
 
@@ -48,11 +48,12 @@ void LabpassClient::authorize(AuthReqResp * authReqResp)
 
     log_i("response code: %d", httpResponseCode);
 
-    if (httpResponseCode >= 200 && httpResponseCode < 300)
+    if (httpResponseCode == 200)
     {
-        StaticJsonDocument<200> doc;
+        StaticJsonDocument<400> doc;
         DeserializationError error = deserializeJson(doc, http.getString());
         if (error) {
+            log_e("deserialize error");
             http.end();
             return;
         }
@@ -68,6 +69,11 @@ void LabpassClient::authorize(AuthReqResp * authReqResp)
         authReqResp->stationId = doc["station_id"].as<String>();
 
     }
+    else if (httpResponseCode == 401)
+    {
+        authReqResp->isError = false;
+        authReqResp->isAuthorized = false;
+    }
 
     http.end();
 }
@@ -78,13 +84,15 @@ void LabpassClient::enroll(EnrollReqResp * enrollReqResp)
     enrollReqResp->isEnrolled = false;
     enrollReqResp->inService = false;
 
-    StaticJsonDocument<256> body;
-    body["badge_id"] = enrollReqResp->badgeId;
-    body["manager_badge_id"] = enrollReqResp->managerId;
-    body["station_id"] = enrollReqResp->stationId;
+    DynamicJsonDocument doc(512);
+    doc["user_badge_id"] = enrollReqResp->userBadgeId;
+    doc["manager_badge_id"] = enrollReqResp->managerBadgeId;
+    doc["station_id"] = enrollReqResp->stationId;
 
     String bodyString;
-    serializeJson(body, bodyString);
+    serializeJson(doc, bodyString);
+
+    log_i("sending: %s", bodyString.c_str());
 
     HTTPClient http;
 
@@ -96,13 +104,15 @@ void LabpassClient::enroll(EnrollReqResp * enrollReqResp)
     }
 
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("Authorization", token_);
+    http.setAuthorizationType("Bearer");
+    http.setAuthorization(token_.c_str());
+    http.setReuse(false);
 
     int httpResponseCode = http.POST(bodyString);
 
-    if (httpResponseCode >= 200 && httpResponseCode < 300)
+    if (httpResponseCode >= 201)
     {
-        StaticJsonDocument<200> doc;
+        DynamicJsonDocument doc(512);
         DeserializationError error = deserializeJson(doc, http.getString());
         if (error)
         {
@@ -113,18 +123,15 @@ void LabpassClient::enroll(EnrollReqResp * enrollReqResp)
         enrollReqResp->isError = false;
         enrollReqResp->isEnrolled = doc["is_enrolled"].as<String>();
         enrollReqResp->inService = doc["in_service"].as<String>();
-        enrollReqResp->badgeId = doc["badge_id"].as<String>();
-        enrollReqResp->managerId = doc["manager_id"].as<bool>();
+        enrollReqResp->userBadgeId = doc["user_badge_id"].as<String>();
+        enrollReqResp->managerBadgeId = doc["manager_badge_id"].as<bool>();
         enrollReqResp->stationId = doc["station_id"].as<String>();
     }
-
     http.end();
 }
 
 void LabpassClient::ping(PingReqResp * pingReqResp)
 {
-    log_i("client ping request backside");
-
     pingReqResp->isError = true;
     pingReqResp->inService = false;
     String url = baseURL_ + PING_PATH;
@@ -144,13 +151,15 @@ void LabpassClient::ping(PingReqResp * pingReqResp)
     }
 
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("Authorization", token_);
+    //http.addHeader("Authorization", token_);
+    http.setAuthorizationType("Bearer");
+    http.setAuthorization(token_.c_str());
+    http.setReuse(false);
 
     int httpResponseCode = http.POST(bodyString);
-
-    if (httpResponseCode >= 200 && httpResponseCode < 300)
+    if (httpResponseCode == 200)
     {
-        StaticJsonDocument<200> doc;
+        DynamicJsonDocument doc(512);
         DeserializationError error = deserializeJson(doc, http.getString());
         if (error)
         {

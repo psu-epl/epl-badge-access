@@ -6,17 +6,15 @@
 #include <tag.h>
 #include "labpass_event/labpass_event.h"
 
-ESP_EVENT_DECLARE_BASE(LabpassReaderEvent);
-
 class HighFrequency {
 
 public:
     HighFrequency(esp_event_loop_handle_t eventLoop, MFRC522_SPI *mfrc522Spi);
     static void timerExpire(void *);
     void start();
-    Tag getLastTag();
-    void setLastTag(Tag tag);
     inline esp_event_loop_handle_t getEventLoop() { return eventLoop_; }
+    void getLastTag(Tag *tag);
+    void setLastTag(Tag *tag);
 
 private:
     esp_event_loop_handle_t eventLoop_;

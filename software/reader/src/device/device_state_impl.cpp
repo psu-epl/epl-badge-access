@@ -1,153 +1,5 @@
 #include "device_state_impl.h"
 
-// if (eventBase == LabpassHFReaderEvent)
-// {
-//     if (eventType == LowFrequencyImpl::labpassLFReaderEventType::shortBadge)
-//     {
-//         AuthReqResp authReqResponse;
-//         authReqResponse.badgeId = tag->lfTag.id;
-//         device->client_->authorize(&authReqResponse);
-//         if (authReqResponse.isError)
-//         {
-//             // TODO: indicate error
-//             return &DeviceInit::getInstance();
-//         }
-//         else if (!authReqResponse.isAuthorized)
-//         {
-//             // TODO: indicate unauthorized
-//             return &DeviceInit::getInstance();
-//         }
-//         else
-//         {
-//             if (!authReqResponse.isManager && authReqResponse.isLoggedOut)
-//             {
-//                 return &DeviceIdle::getInstance();
-//             }
-//             else
-//             {
-//                 // TODO: indicate error
-//                 return NULL;
-//             }
-//         }
-//     }
-//     else if (eventType == LowFrequencyImpl::labpassLFReaderEventType::longBadge)
-//     {
-//     }
-// }
-// else if (eventBase == LabpassLFReaderEvent)
-// {
-//     if (eventType == HighFrequency::labpassHFReaderEventType::shortBadge)
-//     {
-//         AuthReqResp authReqResponse;
-//         device->client_->authorize(&authReqResponse);
-//         if (authReqResponse.isError)
-//         {
-//             // TODO: indicate error
-//             return &DeviceInit::getInstance();
-//         }
-//         else if (!authReqResponse.isAuthorized)
-//         {
-//             // TODO: indicate unauthorized
-//             return &DeviceInit::getInstance();
-//         }
-//         else
-//         {
-//             if (!authReqResponse.isManager && authReqResponse.isLoggedOut)
-//             {
-//                 return &DeviceIdle::getInstance();
-//             }
-//             else
-//             {
-//                 // TODO: indicate error
-//                 return NULL;
-//             }
-//         }
-//     }
-//     else if (eventType == HighFrequency::labpassHFReaderEventType::longBadge)
-//     {
-//     }
-// }
-
-// DeviceState *DeviceBadgeIn::clientEvent(Device *device, uint32_t eventType, void *eventData)
-// {
-//     log_i("badgeRead client event");
-//     DeviceState *newState = NULL;
-
-//     if (device->getActiveUser() == NULL)
-//     {
-//         log_i("active user is null");
-//         if (eventType == LabpassClientEventType::AuthSuccess)
-//         {
-//             log_i("auth success");
-//             device->setActiveUser((AuthResponse *)eventData);
-
-//             if (device->getActiveUser()->isManager)
-//             {
-//                 newState = &DeviceManagerActive::getInstance();
-//             }
-//             else
-//             {
-//                 newState = &DeviceUserActive::getInstance();
-//             }
-//         }
-//         else if (eventType == LabpassClientEventType::AuthFail)
-//         {
-//             log_i("auth fail");
-//             newState = &DeviceIdle::getInstance();
-//         }
-//     }
-//     else
-//     {
-//         log_i("active user is not null");
-//         AuthResponse *newAuthResponse = (AuthResponse *)eventData;
-//         if (eventType == LabpassClientEventType::AuthSuccess)
-//         {
-//             log_i("auth success");
-//             if (device->getActiveUser()->badgeId == newAuthResponse->badgeId)
-//             {
-//                 newState = &DeviceIdle::getInstance();
-//                 delete device->getActiveUser();
-//                 device->setActiveUser(NULL);
-//             }
-//         }
-//     }
-
-//     return newState;
-// }
-
-// DeviceState *DeviceBadgeOut::clientEvent(Device *device, uint32_t eventType, void *eventData)
-// {
-//     log_i("badgeRead client event");
-//     DeviceState *newState = NULL;
-
-//     if (device->getActiveUser() != NULL)
-//     {
-//         log_i("active user is not null");
-//         if (eventType == LabpassClientEventType::AuthSuccess)
-//         {
-//             AuthResponse *authResponse = (AuthResponse *) eventData;
-//             log_i("auth success");
-
-//             if (authResponse->badgeId == device->getActiveUser()->badgeId)
-//             {
-//                 delete device->getActiveUser();
-//                 device->setActiveUser(NULL);
-//                 newState = &DeviceIdle::getInstance();
-//             }
-//             else
-//             {
-//                 //enroll
-//             }
-//         }
-//         else if (eventType == LabpassClientEventType::AuthFail)
-//         {
-//             // auth failed; indicate but don't change state
-//         }
-//     }
-
-//     return newState;
-// }
-
 DeviceState *backwardWifiTrans(WiFiEvent_t wifiEvent)
 {
     DeviceState *newState = NULL;
@@ -185,13 +37,13 @@ DeviceState *ignoreThisEvent()
 
 void DeviceNetReset::enter(Device *device)
 {
-    log_i("DeviceNetReset enter");
+    device->getIndicators()->doPowerNetReset();
     WiFi.disconnect(true, false);
 }
 
 void DeviceNetReset::exit(Device *device)
 {
-    log_i("DeviceNetReset exit");
+    device->getIndicators()->powerLEDShutdown();
 }
 
 DeviceState &DeviceNetReset::getInstance()
@@ -241,13 +93,13 @@ DeviceState *DeviceNetReset::wifiEvent(Device *device, WiFiEvent_t wifiEvent, Wi
 ******************************************************************************/
 void DeviceInit::enter(Device *device)
 {
-    log_i("DeviceInit enter");
+    device->getIndicators()->doPowerInit();
     WiFi.enableSTA(true);
 }
 
 void DeviceInit::exit(Device *device)
 {
-    log_i("DeviceInit exit");
+    device->getIndicators()->powerLEDShutdown();
 }
 
 DeviceState & DeviceInit::getInstance()
@@ -258,7 +110,7 @@ DeviceState & DeviceInit::getInstance()
 
 String DeviceInit::name()
 {
-    return String("INIT");
+    return String("DeviceInit");
 }
 
 DeviceState *DeviceInit::badgeEvent(Device *device, uint32_t eventType, Tag *tag)
@@ -268,7 +120,6 @@ DeviceState *DeviceInit::badgeEvent(Device *device, uint32_t eventType, Tag *tag
 
 DeviceState * DeviceInit::wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info)
 {
-    log_i("init: event: %d", wifiEvent);
     DeviceState *newState = NULL;
 
     switch (wifiEvent)
@@ -304,13 +155,13 @@ DeviceState * DeviceInit::wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiE
 ******************************************************************************/
 void DeviceAPConnect::enter(Device *device)
 {
-    log_i("DeviceAPConnect enter");
+    device->getIndicators()->doPowerAPConnect();
     WiFi.begin(device->getSSID().c_str(), device->getPassword().c_str());
 }
 
 void DeviceAPConnect::exit(Device *device)
 {
-    log_i("DeviceAPConnect exit");
+    device->getIndicators()->powerLEDShutdown();
 }
 
 
@@ -322,7 +173,7 @@ DeviceState & DeviceAPConnect::getInstance()
 
 String DeviceAPConnect::name()
 {
-    return String("INIT");
+    return String("DeviceAPConnect");
 }
 
 DeviceState *DeviceAPConnect::badgeEvent(Device *device, uint32_t eventType, Tag *tag)
@@ -332,7 +183,6 @@ DeviceState *DeviceAPConnect::badgeEvent(Device *device, uint32_t eventType, Tag
 
 DeviceState * DeviceAPConnect::wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info)
 {
-    log_i("state APConnect, got event %d", wifiEvent);
     DeviceState *newState = NULL;
     switch (wifiEvent)
     {
@@ -362,12 +212,12 @@ DeviceState * DeviceAPConnect::wifiEvent(Device *device, WiFiEvent_t wifiEvent, 
 ******************************************************************************/
 void DeviceIPAddress::enter(Device *device)
 {
-    ("DeviceIPAddress enter");
+    device->getIndicators()->doPowerIPAddress();
 }
 
 void DeviceIPAddress::exit(Device *device)
 {
-    ("DeviceIPAddress exit");
+    device->getIndicators()->powerLEDShutdown();
 }
 
 DeviceState & DeviceIPAddress::getInstance()
@@ -378,7 +228,7 @@ DeviceState & DeviceIPAddress::getInstance()
 
 String DeviceIPAddress::name()
 {
-    return String("IP_ADDRESS");
+    return String("DeviceIPAddress");
 }
 
 DeviceState *DeviceIPAddress::badgeEvent(Device *device, uint32_t eventType, Tag *tag)
@@ -388,21 +238,26 @@ DeviceState *DeviceIPAddress::badgeEvent(Device *device, uint32_t eventType, Tag
 
 DeviceState * DeviceIPAddress::wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info)
 {
-    DeviceState * newState = NULL;
-    PingReqResp pingReqResponse;
 
     switch (wifiEvent)
     {
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+        device->getIndicators()->doPowerPingWait();
+        DeviceState *newState = NULL;
+        PingReqResp pingReqResponse;
+        pingReqResponse.stationId = device->getStationID();
+
         uint32_t delayMS = 250;      // 250 ms
         uint32_t maxDelay = 30000;   // about 30 seconds
         uint8_t maxIterations = 17; // about 5 minutes, 20 seconds
         uint8_t counter = 0;
+
+        counter = 1;
+
         for (;;)
         {
-            counter = 1;
             device->getClient()->ping(&pingReqResponse);
-            if (pingReqResponse.isError)
+            if (!pingReqResponse.isError)
             {
                 return &DeviceIdle::getInstance();
             }
@@ -415,10 +270,11 @@ DeviceState * DeviceIPAddress::wifiEvent(Device *device, WiFiEvent_t wifiEvent, 
             {
                 return &DeviceNetReset::getInstance();
             }
+            counter++;
         }
     }
 
-    return newState;
+    return NULL;
 }
 
 /******************************************************************************
@@ -428,12 +284,12 @@ DeviceState * DeviceIPAddress::wifiEvent(Device *device, WiFiEvent_t wifiEvent, 
 ******************************************************************************/
 void DeviceIdle::enter(Device *device)
 {
-    log_i("DeviceIdle enter");
+    device->getIndicators()->doPowerIdle();
 }
 
 void DeviceIdle::exit(Device *device)
 {
-    log_i("DeviceIdle exit");
+    device->getIndicators()->powerLEDShutdown();
 }
 
 DeviceState & DeviceIdle::getInstance()
@@ -444,69 +300,45 @@ DeviceState & DeviceIdle::getInstance()
 
 String DeviceIdle::name()
 {
-    return String("IDLE");
+    return String("DeviceIdle");
 }
 
 DeviceState *DeviceIdle::badgeEvent(Device *device, uint32_t eventType, Tag *tag)
 {
-    log_i("Badge Event in state Device Idle");
     
-    if (eventType == LabpassEvent::ShortHFBadge || eventType == LabpassEvent::ShortHFBadge)
+    if (eventType == LabpassEvent::ShortLFBadge || eventType == LabpassEvent::ShortHFBadge)
     {
         AuthReqResp authReqResponse;
-        authReqResponse.badgeId = tag->getTagID();
+        authReqResponse.badgeId = tag->getID();
         authReqResponse.stationId = device->getStationID();
         device->getClient()->authorize(&authReqResponse);
         if (authReqResponse.isError)
         {
-            // TODO: indicate error
-            return &DeviceInit::getInstance();
+            device->getIndicators()->doAuthError();
+            return NULL;
         }
         else if (!authReqResponse.isAuthorized)
         {
-            // TODO: indicate unauthorized
-            return &DeviceInit::getInstance();
+            device->getIndicators()->doNotAuthorized();
+            return NULL;
         }
         else if (authReqResponse.isAuthorized)
         {
-            // TODO: indicate Authoried
             if (authReqResponse.isManager)
             {
-                managerID_ = tag->getTagID();
+                device->getIndicators()->doShortBadgeInAuthOk();
+                device->setManagerBadgeId(tag->getID());
                 return &DeviceManagerActive::getInstance();
             }
             else
             {
-                userID_ = tag->getTagID();
+                device->getIndicators()->doShortBadgeInAuthOk();
+                device->setUserBadgeId(tag->getID());
                 return &DeviceUserActive::getInstance();
             }
         }
     }
-    else if (eventType == LabpassEvent::LongHFBadge || eventType == LabpassEvent::LongHFBadge)
-    {
-        AuthReqResp authReqResponse;
-        authReqResponse.badgeId = tag->getTagID();
-        device->getClient()->authorize(&authReqResponse);
-        if (authReqResponse.isError)
-        {
-            // TODO: indicate error
-            return &DeviceInit::getInstance();
-        }
-        else if (!authReqResponse.isAuthorized)
-        {
-            // TODO: indicate unauthorized
-            return &DeviceInit::getInstance();
-        }
-        else if (authReqResponse.isAuthorized)
-        {
-            // TODO: indicate Authoried
-            if (authReqResponse.isManager)
-            {
-                return &DeviceEnroll::getInstance();
-            }
-        }
-    }
-
+    return NULL;
 }
 
 DeviceState * DeviceIdle::wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiEventInfo_t info)
@@ -522,12 +354,12 @@ DeviceState * DeviceIdle::wifiEvent(Device *device, WiFiEvent_t wifiEvent, WiFiE
 ******************************************************************************/
 void DeviceUserActive::enter(Device *device)
 {
-    log_i("DeviceUserActive enter");
+    device->getIndicators()->doPowerIdle();
 }
 
 void DeviceUserActive::exit(Device *device)
 {
-    log_i("DeviceUserActive exit");
+    device->getIndicators()->powerLEDShutdown();
 }
 
 DeviceState &DeviceUserActive::getInstance()
@@ -538,38 +370,39 @@ DeviceState &DeviceUserActive::getInstance()
 
 String DeviceUserActive::name()
 {
-    return String("UserActive");
+    return String("DeviceUserActive");
 }
 
 DeviceState *DeviceUserActive::badgeEvent(Device *device, uint32_t eventType, Tag *tag)
 {
-    log_i("Badge Event in state User Active");
 
-    if (eventType == LabpassEvent::ShortHFBadge || eventType == LabpassEvent::ShortHFBadge)
+    if (eventType == LabpassEvent::ShortLFBadge || eventType == LabpassEvent::ShortHFBadge)
     {
         AuthReqResp authReqResponse;
-        authReqResponse.badgeId = tag->getTagID();
+        authReqResponse.badgeId = tag->getID();
         authReqResponse.stationId = device->getStationID();
         device->getClient()->authorize(&authReqResponse);
         if (authReqResponse.isError)
         {
-            // TODO: indicate error
-            return &DeviceInit::getInstance();
+            device->getIndicators()->doAuthError();
+            return NULL;
         }
         else if (!authReqResponse.isAuthorized)
         {
-            // TODO: indicate unauthorized
-            return &DeviceInit::getInstance();
+            device->getIndicators()->doAuthError();
+            return NULL;
         }
         else
         {
             if (!authReqResponse.isManager && authReqResponse.isLoggedOut)
             {
-                userID_ = 0;
+                device->setUserBadgeId("");
+                device->getIndicators()->doShortBadgeOutAuthOk();
                 return &DeviceIdle::getInstance();
             }
             else
             {
+                device->getIndicators()->doAuthError();
                 // TODO: indicate error
                 return NULL;
             }
@@ -591,12 +424,12 @@ DeviceState *DeviceUserActive::wifiEvent(Device *device, WiFiEvent_t wifiEvent, 
 ******************************************************************************/
 void DeviceManagerActive::enter(Device *device)
 {
-    log_i("DeviceManagerActive enter");
+    device->getIndicators()->doPowerIdle();
 }
 
 void DeviceManagerActive::exit(Device *device)
 {
-    log_i("DeviceManagerActive exit");
+    device->getIndicators()->powerLEDShutdown();
 }
 
 DeviceState &DeviceManagerActive::getInstance()
@@ -607,41 +440,65 @@ DeviceState &DeviceManagerActive::getInstance()
 
 String DeviceManagerActive::name()
 {
-    return String("ManagerActive");
+    return String("DeviceManagerActive");
 }
 
 DeviceState *DeviceManagerActive::badgeEvent(Device *device, uint32_t eventType, Tag *tag)
 {
-    log_i("Badge Event in state Manager Active");
 
-    if (eventType == LabpassEvent::ShortHFBadge || eventType == LabpassEvent::ShortHFBadge)
+    if (eventType == LabpassEvent::ShortLFBadge || eventType == LabpassEvent::ShortHFBadge)
     {
         AuthReqResp authReqResponse;
-        authReqResponse.badgeId = tag->getTagID();
+        authReqResponse.badgeId = tag->getID();
         authReqResponse.stationId = device->getStationID();
         device->getClient()->authorize(&authReqResponse);
         if (authReqResponse.isError)
         {
-            // TODO: indicate error
+            device->getIndicators()->doAuthError();
             return &DeviceInit::getInstance();
         }
         else if (!authReqResponse.isAuthorized)
         {
-            // TODO: indicate unauthorized
+            device->getIndicators()->doAuthError();
             return &DeviceInit::getInstance();
         }
         else
         {
             if (authReqResponse.isManager && authReqResponse.isLoggedOut)
             {
-                managerID_ = 0;
+                device->setManagerBadgeId("");
+                device->getIndicators()->doShortBadgeOutAuthOk();
                 return &DeviceIdle::getInstance();
             }
             else
             {
-                // TODO: indicate error
+                device->getIndicators()->doAuthError();
                 return NULL;
             }
+        }
+    }
+    else if (eventType == LabpassEvent::LongLFBadge || eventType == LabpassEvent::LongHFBadge)
+    {
+        AuthReqResp authReqResponse;
+        authReqResponse.badgeId = tag->getID();
+        authReqResponse.stationId = device->getStationID();
+        device->getClient()->authorize(&authReqResponse);
+        if (authReqResponse.isError)
+        {
+            device->getIndicators()->doAuthError();
+            return NULL;
+        }
+        else if (!authReqResponse.isAuthorized)
+        {
+            device->getIndicators()->doNotAuthorized();
+            return NULL;
+        }
+        else if (authReqResponse.isAuthorized && authReqResponse.isManager)
+        {
+            device->getIndicators()->statusLEDShutdown();
+            device->getIndicators()->doEnrollState();
+
+            return &DeviceEnroll::getInstance();
         }
     }
 
@@ -660,12 +517,14 @@ DeviceState *DeviceManagerActive::wifiEvent(Device *device, WiFiEvent_t wifiEven
 ******************************************************************************/
 void DeviceEnroll::enter(Device *device)
 {
-    log_i("DeviceManagerActive enter");
+    device->getIndicators()->doPowerIdle();
+    device->stopEnrollTimer();
+    device->startEnrollTimer();
 }
 
 void DeviceEnroll::exit(Device *device)
 {
-    log_i("DeviceManagerActive exit");
+    device->getIndicators()->powerLEDShutdown();
 }
 
 DeviceState &DeviceEnroll::getInstance()
@@ -676,30 +535,38 @@ DeviceState &DeviceEnroll::getInstance()
 
 String DeviceEnroll::name()
 {
-    return String("ManagerActive");
+    return String("DeviceEnroll");
 }
 
 DeviceState *DeviceEnroll::badgeEvent(Device *device, uint32_t eventType, Tag *tag)
 {
-    log_i("Badge Event in state Device Enroll");
 
-    if (eventType == LabpassEvent::ShortHFBadge || eventType == LabpassEvent::ShortHFBadge)
+    if (eventType == LabpassEvent::ShortLFBadge || eventType == LabpassEvent::ShortHFBadge)
     {
+        if (tag->getID() == device->getManagerBadgeId())
+        {
+            return NULL;
+        }
+
         EnrollReqResp enrollReqResponse;
-        enrollReqResponse.badgeId = tag->getTagID();
-        enrollReqResponse.managerId = managerID_;
+        enrollReqResponse.userBadgeId = tag->getID();
+        enrollReqResponse.managerBadgeId = device->getManagerBadgeId();
         enrollReqResponse.stationId = device->getStationID();
 
         device->getClient()->enroll(&enrollReqResponse);
         if (enrollReqResponse.isError)
         {
-            // TODO: indicate error
-            return &DeviceInit::getInstance();
+            device->getIndicators()->doAuthError();
+            return &DeviceIdle::getInstance();
         }
-        else if (!enrollReqResponse.isEnrolled)
+        else if (enrollReqResponse.isEnrolled)
         {
-            // TODO: indicate unauthorized
-            return &DeviceInit::getInstance();
+            device->getIndicators()->statusLEDShutdown();
+            device->getIndicators()->doEnrollSuccess();
+            delayMicroseconds(400000);
+            device->getIndicators()->statusLEDShutdown();
+            device->getIndicators()->doEnrollContinue();
+            return &DeviceEnroll::getInstance();
         }
     }
 

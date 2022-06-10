@@ -2,9 +2,9 @@
 
 static volatile LEDState powerBlinkState;
 static volatile LEDState statusBlinkState;
-static volatile bool buzzerBlinkState;
+static volatile BuzzerState buzzerBlinkState;
 
-Indicators::Indicators(Config &config) : config_(config)
+Indicators::Indicators(Config *config) : config_(config)
 {
     ledcSetup(INDICATOR_LEDC_CHAN_P_RED, 12000, 8);
     ledcSetup(INDICATOR_LEDC_CHAN_P_GREEN, 12000, 8);
@@ -12,17 +12,15 @@ Indicators::Indicators(Config &config) : config_(config)
     ledcSetup(INDICATOR_LEDC_CHAN_S_RED, 12000, 8);
     ledcSetup(INDICATOR_LEDC_CHAN_S_GREEN, 12000, 8);
     ledcSetup(INDICATOR_LEDC_CHAN_S_BLUE, 12000, 8);
-    ledcSetup(INDICATOR_LEDC_CHAN_B, 12000, 8);
+    ledcSetup(INDICATOR_LEDC_CHAN_B, 200, 8);
 
-    ledcAttachPin(config_.powerRedGPIO, INDICATOR_LEDC_CHAN_P_RED);
-    ledcAttachPin(config_.powerGreenGPIO, INDICATOR_LEDC_CHAN_P_GREEN);
-    ledcAttachPin(config_.powerBlueGPIO, INDICATOR_LEDC_CHAN_P_BLUE);
-    ledcAttachPin(config_.statusRedGPIO, INDICATOR_LEDC_CHAN_S_RED);
-    ledcAttachPin(config_.statusGreenGPIO, INDICATOR_LEDC_CHAN_S_GREEN);
-    ledcAttachPin(config_.statusBlueGPIO, INDICATOR_LEDC_CHAN_S_BLUE);
-    ledcAttachPin(config_.buzzerGPIO, INDICATOR_LEDC_CHAN_B);
-
-    buzzerDuty_ = (4095 / 255) * min(192, 255);
+    ledcAttachPin(config_->powerRedGPIO, INDICATOR_LEDC_CHAN_P_RED);
+    ledcAttachPin(config_->powerGreenGPIO, INDICATOR_LEDC_CHAN_P_GREEN);
+    ledcAttachPin(config_->powerBlueGPIO, INDICATOR_LEDC_CHAN_P_BLUE);
+    ledcAttachPin(config_->statusRedGPIO, INDICATOR_LEDC_CHAN_S_RED);
+    ledcAttachPin(config_->statusGreenGPIO, INDICATOR_LEDC_CHAN_S_GREEN);
+    ledcAttachPin(config_->statusBlueGPIO, INDICATOR_LEDC_CHAN_S_BLUE);
+    ledcAttachPin(config_->buzzerGPIO, INDICATOR_LEDC_CHAN_B);
 
     esp_timer_create_args_t createPowerBlinkTimerArgs{
         .callback = Indicators::powerBlinkTimerExpire,
@@ -74,53 +72,121 @@ Indicators::Indicators(Config &config) : config_(config)
     esp_timer_create(&createBuzzerDurationTimerArgs, &buzzerDurationTimerHandle_);
 }
 
-void Indicators::doShortBadge()
+void Indicators::doShortBadgeInAuthOk()
 {
     statusLEDOn(ColorGREEN);
-    buzzerOn();
+    buzzerOn(INDICATOR_BUZZER_GOOD_FREQ);
+    esp_timer_start_once(buzzerDurationTimerHandle_, SHORT_BADGE_DURATION);
+}
+
+void Indicators::doShortBadgeOutAuthOk()
+{
+    statusLEDOff();
+    buzzerOn(INDICATOR_BUZZER_GOOD_FREQ);
+    esp_timer_start_once(buzzerDurationTimerHandle_, SHORT_BADGE_DURATION);
+}
+
+void Indicators::doNotAuthorized()
+{
+    statusLEDOn(ColorRED);
+    buzzerOn(INDICATOR_BUZZER_BAD_FREQ);
     esp_timer_start_once(statusDurationTimerHandle_, SHORT_BADGE_DURATION);
     esp_timer_start_once(buzzerDurationTimerHandle_, SHORT_BADGE_DURATION);
 }
 
-void Indicators::doLongBadge()
+void Indicators::doAuthError()
 {
-    statusLEDBlinkStart(ColorGREEN, LONG_BADGE_RATE);
-    buzzerBlinkStart(LONG_BADGE_RATE);
-    esp_timer_start_once(statusDurationTimerHandle_, 8000000);
+    statusLEDBlinkStart(ColorRED, LONG_BADGE_RATE);
+    buzzerBlinkStart(200, LONG_BADGE_RATE);
+    esp_timer_start_once(statusDurationTimerHandle_, LONG_BADGE_DURATION);
     esp_timer_start_once(buzzerDurationTimerHandle_, LONG_BADGE_DURATION);
 }
 
-void Indicators::powerLEDOn(Color color)
+void Indicators::doEnrollState()
 {
-    switch (color)
-    {
-        case ColorRED:
-            ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 200);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 0);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 0);
-            powerBlinkState.color = ColorRED;
-        case ColorGREEN:
-            ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 0);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 200);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 0);
-            powerBlinkState.color = ColorGREEN;
-        case ColorBLUE:
-            ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 0);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 0);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 200);
-            powerBlinkState.color = ColorBLUE;
-        case ColorORANGE:
-            ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 0);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 0);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 0);
-            powerBlinkState.color = ColorORANGE;
-        case ColorYELLOW:
-            ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 0);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 0);
-            ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 0);
-            powerBlinkState.color = ColorYELLOW;
-        }
-        powerBlinkState.on = true;
+    statusLEDBlinkStart(ColorBLUE, LONG_BADGE_RATE);
+    buzzerBlinkStart(8000, LONG_BADGE_RATE);
+    esp_timer_start_once(buzzerDurationTimerHandle_, LONG_BADGE_DURATION);
+}
+
+void Indicators::doEnrollSuccess()
+{
+    statusLEDOn(ColorBLUE);
+    buzzerOn(INDICATOR_BUZZER_GOOD_FREQ);
+    esp_timer_start_once(statusDurationTimerHandle_, SHORT_BADGE_DURATION);
+    esp_timer_start_once(buzzerDurationTimerHandle_, SHORT_BADGE_DURATION);
+}
+
+void Indicators::doEnrollContinue()
+{
+    statusLEDBlinkStart(ColorBLUE, LONG_BADGE_RATE);
+}
+
+void Indicators::doPowerNetReset() // solid red
+{
+    powerLEDOn(ColorRED);
+}
+
+void Indicators::doPowerInit()      // blinking red
+{
+    powerLEDBlinkStart(ColorRED, POWER_BLINK_RATE_SLOW);
+}
+
+void Indicators::doPowerAPConnect()     // blinking orange
+{
+    powerLEDBlinkStart(ColorORANGE, POWER_BLINK_RATE_SLOW);
+}
+
+void Indicators::doPowerIPAddress() // slow blinking yellow
+{
+    powerLEDBlinkStart(ColorYELLOW, POWER_BLINK_RATE_SLOW);
+}
+
+void Indicators::doPowerPingWait() // fast blinking yellow
+{
+    powerLEDBlinkStart(ColorYELLOW, POWER_BLINK_RATE_FAST);
+}
+
+void Indicators::doPowerIdle() // solid green
+{
+    powerLEDOn(ColorGREEN);
+}
+
+void Indicators::powerLEDOn(Color color)
+        {
+            switch (color)
+            {
+            case ColorRED:
+                ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 32);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 0);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 0);
+                powerBlinkState.color = ColorRED;
+                break;
+            case ColorGREEN:
+                ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 0);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 32);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 0);
+                powerBlinkState.color = ColorGREEN;
+                break;
+            case ColorBLUE:
+                ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 0);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 0);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 32);
+                powerBlinkState.color = ColorBLUE;
+                break;
+            case ColorORANGE:
+                ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 32);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 3);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 0);
+                powerBlinkState.color = ColorORANGE;
+                break;
+            case ColorYELLOW:
+                ledcWrite(INDICATOR_LEDC_CHAN_P_RED, 32);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_GREEN, 8);
+                ledcWrite(INDICATOR_LEDC_CHAN_P_BLUE, 0);
+                powerBlinkState.color = ColorYELLOW;
+            }
+            powerBlinkState.on = true;
 }
 
 void Indicators::powerLEDOff()
@@ -149,29 +215,33 @@ void Indicators::statusLEDOn(Color color)
     switch (color)
     {
     case ColorRED:
-        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, dutyPct_(100));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, dutyPct_(0));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, dutyPct_(0));
+        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, 32);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, 0);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, 0);
         statusBlinkState.color = ColorRED;
+        break;
     case ColorGREEN:
-        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, dutyPct_(0));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, dutyPct_(100));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, dutyPct_(0));
+        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, 0);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, 32);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, 0);
         statusBlinkState.color = ColorGREEN;
+        break;
     case ColorBLUE:
-        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, dutyPct_(0));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, dutyPct_(0));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, dutyPct_(100));
+        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, 0);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, 0);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, 32);
         statusBlinkState.color = ColorBLUE;
+        break;
     case ColorORANGE:
-        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, dutyPct_(100));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, dutyPct_(59));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, duty_);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, 32);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, 3);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, 0);
         statusBlinkState.color = ColorORANGE;
+        break;
     case ColorYELLOW:
-        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, dutyPct_(100));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, dutyPct_(100));
-        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, duty_);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_RED, 32);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_GREEN, 8);
+        ledcWrite(INDICATOR_LEDC_CHAN_S_BLUE, 0);
         statusBlinkState.color = ColorYELLOW;
     }
     statusBlinkState.on = true;
@@ -200,30 +270,32 @@ void Indicators::statusLEDBlinkStart(Color color, uint64_t delay)
 
 void Indicators::relayOn()
 {
-    digitalWrite(config_.relayGPIO, HIGH);
+    digitalWrite(config_->relayGPIO, HIGH);
 }
 
 void Indicators::relayOff()
 {
-    digitalWrite(config_.relayGPIO, LOW);
+    digitalWrite(config_->relayGPIO, LOW);
 }
 
-void Indicators::buzzerBlinkStart(uint64_t duration)
+void Indicators::buzzerBlinkStart(uint32_t freq, uint64_t duration)
 {
-    buzzerOn();
+    buzzerOn(freq);
     esp_timer_start_periodic(buzzerBlinkTimerHandle_, duration);
 }
 
-void Indicators::buzzerOn()
+void Indicators::buzzerOn(uint32_t freq)
 {
-    ledcWrite(INDICATOR_LEDC_CHAN_B, buzzerDuty_);
-    buzzerBlinkState = true;
+    ledcSetup(INDICATOR_LEDC_CHAN_B, freq, 8);
+    ledcWrite(INDICATOR_LEDC_CHAN_B, 192);
+    buzzerBlinkState.on = true;
+    buzzerBlinkState.freq = freq;
 }
 
 void Indicators::buzzerOff()
 {
     ledcWrite(INDICATOR_LEDC_CHAN_B, 0);
-    buzzerBlinkState = false;
+    buzzerBlinkState.on = false;
 }
 
 void Indicators::buzzerShutdown()
@@ -274,13 +346,13 @@ void Indicators::statusDurationTimerExpire(void *p)
 void Indicators::buzzerBlinkTimerExpire(void *p)
 {
     Indicators *that = (Indicators *)p;
-    if (buzzerBlinkState)
+    if (buzzerBlinkState.on)
     {
         that->buzzerOff();
     }
     else
     {
-        that->buzzerOn();
+        that->buzzerOn(buzzerBlinkState.freq);
     }
 }
 
@@ -288,9 +360,4 @@ void Indicators::buzzerDurationTimerExpire(void *p)
 {
     Indicators *that = (Indicators *)p;
     that->buzzerShutdown();
-}
-
-uint32_t Indicators::dutyPct_(uint8_t percent)
-{
-    return (4095 / 255) * min(int(percent), 255);
 }

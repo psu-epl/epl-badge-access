@@ -1,8 +1,9 @@
 #include "unity.h"
 #include <tag.h>
 #include <low_freq.h>
-#include <state.h>
-#include <tag_state_impl.h>
+#include <lf_state.h>
+#include <lf_state_impl.h>
+#include <lf_state.h>
 
 class LowFrequencyImpl : public LowFrequency
 {
@@ -28,152 +29,152 @@ void tearDown()
 
 void testSyncStateTransitionSuccess()
 {
-    State *state = &StateSync::getInstance();
+    LFState *state = &LFStateSync::getInstance();
 
-    TEST_ASSERT_TRUE(state->edgeEvent(lowFreqImpl, E0001) == NULL);
+    TEST_ASSERT_TRUE(state->edgeEvent(lowFreqImpl, LFState::E0001) == NULL);
     TEST_ASSERT_TRUE(state->edgeEvent(lowFreqImpl, E1) == NULL);
-    state = state->edgeEvent(lowFreqImpl, E1);
+    state->edgeEvent(lowFreqImpl, E1, &state);
 
     TEST_ASSERT_TRUE(state->name() == "StatePadding");
 }
 
 void testSyncStateTransitionFail1()
 {
-    State *state = &StateSync::getInstance();
+    LFState *&LFStateSync::getInstance();
 
     TEST_ASSERT_TRUE(state->edgeEvent(lowFreqImpl, E0001) == NULL);
-    state = state->edgeEvent(lowFreqImpl, E001);
-    TEST_ASSERT_TRUE(state->name() == "StateSync");
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    TEST_ASSERT_TRUE(state->name() == "LFStateSync");
 }
 
 void testSyncStateTransitionFail2()
 {
-    State *state = &StateSync::getInstance();
+    LFState *&LFStateSync::getInstance();
 
     TEST_ASSERT_TRUE(state->edgeEvent(lowFreqImpl, E0001) == NULL);
     TEST_ASSERT_TRUE(state->edgeEvent(lowFreqImpl, E1) == NULL);
-    state = state->edgeEvent(lowFreqImpl, E001);
-    TEST_ASSERT_TRUE(state->name() == "StateSync");
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    TEST_ASSERT_TRUE(state->name() == "LFStateSync");
 }
 
 void testPaddingStateTransitionSuccess()
 {
-    State *state = &StateSync::getInstance();
-    State *newState = NULL;
+    LFState *&LFStateSync::getInstance();
+    LFState *newLFState = NULL;
 
-    state->edgeEvent(lowFreqImpl, E0001);
-    state->edgeEvent(lowFreqImpl, E1);
-    newState = state->edgeEvent(lowFreqImpl, E1);
+    state->edgeEvent(lowFreqImpl, E0001, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    newLFState = state->edgeEvent(lowFreqImpl, E1);
 
     state->exit(lowFreqImpl);
-    state = newState;
+    newState;
     state->enter(lowFreqImpl);
 
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state = state->edgeEvent(lowFreqImpl, E01);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
 
     TEST_ASSERT_TRUE(state->name() == "StatePayload");
 }
 
 void testPaddingStateTransitionFailure()
 {
-    State *state = &StateSync::getInstance();
+    LFState *&LFStateSync::getInstance();
 
-    state->edgeEvent(lowFreqImpl, E0001);
-    state->edgeEvent(lowFreqImpl, E1);
-    state = state->edgeEvent(lowFreqImpl, E1);
+    state->edgeEvent(lowFreqImpl, E0001, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
 
     TEST_ASSERT_TRUE(state->name() == "StatePadding");
 
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state = state->edgeEvent(lowFreqImpl, E001);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
 
-    TEST_ASSERT_TRUE(state->name() == "StateSync");
+    TEST_ASSERT_TRUE(state->name() == "LFStateSync");
 }
 
 void testPayloadStateTransition01Success()
 {
-    State *state = &StateSync::getInstance();
-    State *newState = NULL;
+    LFState *&LFStateSync::getInstance();
+    LFState *newLFState = NULL;
 
-    state->edgeEvent(lowFreqImpl, E0001);
-    state->edgeEvent(lowFreqImpl, E1);
-    newState = state->edgeEvent(lowFreqImpl, E1);
+    state->edgeEvent(lowFreqImpl, E0001, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    newLFState = state->edgeEvent(lowFreqImpl, E1);
 
     state->exit(lowFreqImpl);
-    state = newState;
+    newState;
     state->enter(lowFreqImpl);
 
     TEST_ASSERT_TRUE(state->name() == "StatePadding");
 
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    newState = state->edgeEvent(lowFreqImpl, E01);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    newLFState = state->edgeEvent(lowFreqImpl, E01);
 
     state->exit(lowFreqImpl);
-    state = newState;
+    newState;
     state->enter(lowFreqImpl);
 
     TEST_ASSERT_FALSE(state == NULL);
     TEST_ASSERT_TRUE(state->name() == "StatePayload");
 
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E1);
-    newState = state->edgeEvent(lowFreqImpl, E001);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E001), &state;
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    newLFState = state->edgeEvent(lowFreqImpl, E001, &state);
 
     state->exit(lowFreqImpl);
-    state = newState;
+    newState;
     state->enter(lowFreqImpl);
 
     TEST_ASSERT_FALSE(state == NULL);
-    TEST_ASSERT_TRUE(state->name() == "StateSync");
+    TEST_ASSERT_TRUE(state->name() == "LFStateSync");
     TEST_ASSERT_FALSE(lowFreqImpl->lastTag == NULL);
 
     TEST_ASSERT_TRUE(lowFreqImpl->lastTag->lfTag.facility == 258);
@@ -182,79 +183,79 @@ void testPayloadStateTransition01Success()
 
 void testPayloadStateTransition10Success()
 {
-    State *state = &StateSync::getInstance();
-    State *newState = NULL;
+    LFState *&LFStateSync::getInstance();
+    LFState *newLFState = NULL;
 
-    state->edgeEvent(lowFreqImpl, E0001);
-    state->edgeEvent(lowFreqImpl, E1);
-    newState = state->edgeEvent(lowFreqImpl, E1);
+    state->edgeEvent(lowFreqImpl, E0001, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    newLFState = state->edgeEvent(lowFreqImpl, E1);
 
     state->exit(lowFreqImpl);
-    state = newState;
+    newState;
     state->enter(lowFreqImpl);
 
     TEST_ASSERT_TRUE(state->name() == "StatePadding");
 
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    newState = state->edgeEvent(lowFreqImpl, E01);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    newLFState = state->edgeEvent(lowFreqImpl, E01);
 
     state->exit(lowFreqImpl);
-    state = newState;
+    newState;
     state->enter(lowFreqImpl);
 
     TEST_ASSERT_FALSE(state == NULL);
     TEST_ASSERT_TRUE(state->name() == "StatePayload");
 
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E1);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E01);
-    state->edgeEvent(lowFreqImpl, E001);
-    state->edgeEvent(lowFreqImpl, E1);
-    newState = state->edgeEvent(lowFreqImpl, E01);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E01, &state);
+    state->edgeEvent(lowFreqImpl, E001, &state);
+    state->edgeEvent(lowFreqImpl, E1, &state);
+    newLFState = state->edgeEvent(lowFreqImpl, E01);
 
     state->exit(lowFreqImpl);
-    state = newState;
+    newState;
     state->enter(lowFreqImpl);
 
     TEST_ASSERT_FALSE(state == NULL);
-    TEST_ASSERT_TRUE(state->name() == "StateSync");
+    TEST_ASSERT_TRUE(state->name() == "LFStateSync");
     TEST_ASSERT_FALSE(lowFreqImpl->lastTag == NULL);
 
     TEST_ASSERT_TRUE(lowFreqImpl->lastTag->lfTag.facility == 258);

@@ -27,9 +27,9 @@ string LFStateSync::name()
     return string("StateSync");
 }
 
-void LFStateSync::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState)
+LFState::NextState LFStateSync::edgeEvent(LowFrequency *lf, EdgeType edgeType)
 {
-    *outNextState = NULL;
+    LFState::NextState nextState = NoChange;
 
     switch (edgeType)
     {
@@ -37,10 +37,10 @@ void LFStateSync::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNe
             header_ = 0b00000100;
             break;
         case E001:
-            *outNextState = &LFStateSync::getInstance();
+            nextState = Sync;
             break;
         case E01:
-            *outNextState = &LFStateSync::getInstance();
+            nextState = Sync;
             break;
         case E1:
             if (header_ == 0b00000100)
@@ -49,16 +49,18 @@ void LFStateSync::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNe
             }
             else if (header_ == 0b00000110)
             {
-                *outNextState = &LFStatePadding::getInstance();
+                nextState = Padding;
             }
             else
             {
-                *outNextState = &LFStateSync::getInstance();
+                nextState = Sync;
             }
             break;
         default:
-            *outNextState = &LFStateSync::getInstance();
-    }
+            nextState = Sync;
+        }
+
+    return nextState;
 }
 
 /******************************************************************************
@@ -88,31 +90,33 @@ string LFStatePadding::name()
     return string("StatePadding");
 }
 
-void LFStatePadding::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState)
+LFState::NextState LFStatePadding::edgeEvent(LowFrequency *lf, EdgeType edgeType)
 {
-    *outNextState = NULL;
+    LFState::NextState nextState = NoChange;
 
     switch(edgeType)
     {
     case E0001:
-        *outNextState = &LFStateSync::getInstance();
+        nextState = Sync;
         break;
     case E001:
-        *outNextState = &LFStateSync::getInstance();
+        nextState = Sync;
         break;
     case E01:
         zerosCount_++;
         if (zerosCount_ == 8)
         {
-            *outNextState = &LFStatePayload::getInstance();
+            nextState = Payload;
         }
         break;
     case E1:
-        *outNextState = &LFStateSync::getInstance();
+        nextState = Sync;
         break;
     default:
-        *outNextState = &LFStateSync::getInstance();
+        nextState = Sync;
     }
+
+    return nextState;
 }
 
 /******************************************************************************
@@ -144,14 +148,14 @@ string LFStatePayload::name()
     return string("StatePayload");
 }
 
-void LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState)
+LFState::NextState LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType)
 {
-    *outNextState = NULL;
+    LFState::NextState nextState = NoChange;
 
     switch(edgeType)
     {
     case E0001:
-        *outNextState = &LFStateSync::getInstance();
+        nextState = Sync;
         break;
     case E001:
         payload_[pos_--] = 0;
@@ -163,20 +167,20 @@ void LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **ou
         }
         if (pos_ == 255)
         {
-            Tag * tag = new Tag;
-            if(checkParity(tag))
+            Tag * tag;
+            if(checkParity(&tag))
             {
-                lf->sendTag(*tag);
-                *outNextState = &LFStateSync::getInstance();
+                lf->sendTag(tag);
+                nextState = Sync;
             }
             else
             {
-                *outNextState = &LFStateSync::getInstance();
+                nextState = Sync;
             }
         }
         else if (pos_ > payload_.size() -1)
         {
-            *outNextState = &LFStateSync::getInstance();
+            nextState = Sync;
         }
         break;
     case E01:
@@ -188,20 +192,20 @@ void LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **ou
         }
         if (pos_ == 255)
         {
-            Tag *tag = new Tag;
-            if (checkParity(tag))
+            Tag *tag;
+            if (checkParity(&tag))
             {
-                lf->sendTag(*tag);
-                *outNextState = &LFStateSync::getInstance();
+                lf->sendTag(tag);
+                nextState = Sync;
             }
             else
             {
-                *outNextState = &LFStateSync::getInstance();
+                nextState = Sync;
             }
         }
         else if (pos_ > payload_.size() - 1)
         {
-            *outNextState = &LFStateSync::getInstance();
+            nextState = Sync;
         }
         break;
     case E1:
@@ -212,29 +216,31 @@ void LFStatePayload::edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **ou
         }
         if (pos_ == 255)
         {
-            Tag *tag = new Tag;
-            if (checkParity(tag))
+            Tag *tag;
+            if (checkParity(&tag))
             {
-                lf->sendTag(*tag);
-                *outNextState = &LFStateSync::getInstance();
+                lf->sendTag(tag);
+                nextState = Sync;
             }
             else
             {
-                *outNextState = &LFStateSync::getInstance();
+                nextState = Sync;
             }
         }
         else if (pos_ > payload_.size() - 1)
         {
-            *outNextState = &LFStateSync::getInstance();
+            nextState = Sync;
         }
         break;
-        *outNextState = &LFStateSync::getInstance();
+        nextState = Sync;
     default:
-        *outNextState = &LFStateSync::getInstance();
+        nextState = Sync;
     }
+
+    return nextState;
 }
 
-bool LFStatePayload::checkParity(Tag *tag)
+bool LFStatePayload::checkParity(Tag **tag)
 {
     bitset<74> mask = 0x03;
     bitset<37> buf = 0x00;
@@ -275,8 +281,9 @@ bool LFStatePayload::checkParity(Tag *tag)
     bitset<37> facilityMask = 0b0111111111111111100000000000000000000;
     bitset<37> idMask =       0b0000000000000000011111111111111111110;
 
-    tag->lfTag.facility = ((buf & facilityMask) >> 20).to_ulong();
-    tag->lfTag.id = ((buf & idMask) >> 1).to_ulong();
+    uint32_t facility = ((buf & facilityMask) >> 20).to_ulong();
+    uint32_t id = ((buf & idMask) >> 1).to_ulong();
+    *tag = new Tag(id, facility);
 
     return true;
 }
