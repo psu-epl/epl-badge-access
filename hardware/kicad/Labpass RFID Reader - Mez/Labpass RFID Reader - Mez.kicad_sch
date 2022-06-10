@@ -441,8 +441,8 @@
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid 02ab15cc-d4b2-48c5-a9cd-646284b23111)
     (property "Reference" "C1" (id 0) (at 105.41 64.77 90))
-    (property "Value" "8-40p" (id 1) (at 105.41 67.31 90))
-    (property "Footprint" "Resistor_SMD:R_0603_1608Metric" (id 2) (at 109.22 71.4248 0)
+    (property "Value" "" (id 1) (at 105.41 67.31 90))
+    (property "Footprint" "" (id 2) (at 109.22 71.4248 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 105.41 72.39 0)
@@ -495,10 +495,10 @@
     (property "Reference" "C7" (id 0) (at 130.81 80.0099 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "8-40p" (id 1) (at 130.81 82.5499 0)
+    (property "Value" "" (id 1) (at 130.81 82.5499 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (id 2) (at 127.9652 85.09 0)
+    (property "Footprint" "" (id 2) (at 127.9652 85.09 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 127 81.28 0)
@@ -514,10 +514,10 @@
     (property "Reference" "C8" (id 0) (at 130.81 92.7099 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "8-40p" (id 1) (at 130.81 95.2499 0)
+    (property "Value" "" (id 1) (at 130.81 95.2499 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (id 2) (at 127.9652 97.79 0)
+    (property "Footprint" "" (id 2) (at 127.9652 97.79 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 127 93.98 0)
@@ -546,8 +546,8 @@
     (in_bom yes) (on_board yes)
     (uuid a97f35f9-349f-4c3a-b8b8-43d6d23efb6c)
     (property "Reference" "C4" (id 0) (at 105.41 107.95 90))
-    (property "Value" "8-40p" (id 1) (at 105.41 110.49 90))
-    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (id 2) (at 109.22 101.9048 0)
+    (property "Value" "" (id 1) (at 105.41 110.49 90))
+    (property "Footprint" "" (id 2) (at 109.22 101.9048 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 105.41 102.87 0)
@@ -627,7 +627,7 @@
 
   (symbol_instances
     (path "/02ab15cc-d4b2-48c5-a9cd-646284b23111"
-      (reference "C1") (unit 1) (value "8-40p") (footprint "Resistor_SMD:R_0603_1608Metric")
+      (reference "C1") (unit 1) (value "11p") (footprint "Resistor_SMD:R_0603_1608Metric")
     )
     (path "/e2e20a04-e569-4b7b-a4f2-db2a07b068bb"
       (reference "C2") (unit 1) (value "NC") (footprint "Capacitor_SMD:C_0603_1608Metric")
@@ -636,7 +636,7 @@
       (reference "C3") (unit 1) (value "NC") (footprint "Capacitor_SMD:C_0603_1608Metric")
     )
     (path "/a97f35f9-349f-4c3a-b8b8-43d6d23efb6c"
-      (reference "C4") (unit 1) (value "8-40p") (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (reference "C4") (unit 1) (value "11p") (footprint "Capacitor_SMD:C_0603_1608Metric")
     )
     (path "/30827bd8-2c45-4b23-a780-e074789ebb44"
       (reference "C5") (unit 1) (value "30p") (footprint "Capacitor_SMD:C_0603_1608Metric")
@@ -645,10 +645,10 @@
       (reference "C6") (unit 1) (value "30p") (footprint "Capacitor_SMD:C_0603_1608Metric")
     )
     (path "/57084d4e-a4ea-4ca2-940d-82b7c846897f"
-      (reference "C7") (unit 1) (value "8-40p") (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (reference "C7") (unit 1) (value "32p") (footprint "Capacitor_SMD:C_0603_1608Metric")
     )
     (path "/8adc823a-7fcc-4921-9aae-eafe09355df0"
-      (reference "C8") (unit 1) (value "8-40p") (footprint "Capacitor_SMD:C_0603_1608Metric")
+      (reference "C8") (unit 1) (value "32p") (footprint "Capacitor_SMD:C_0603_1608Metric")
     )
     (path "/2eda4bfe-b50d-4efe-b93a-e95f3e8ce559"
       (reference "J1") (unit 1) (value "Conn_01x03_Male") (footprint "Capstone Footprint Library:PinHeader_1x03_P2.54mm_Horizontal")

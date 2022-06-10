@@ -259,7 +259,7 @@
 
   (footprint "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Horizontal" (layer "F.Cu")
     (tedit 59FED5CB) (tstamp 1683da45-837c-454c-a274-33195d08c07f)
-    (at 108.468 114.362 90)
+    (at 108.35 114.6 90)
     (descr "Through hole angled pin header, 2x04, 2.54mm pitch, 6mm pin length, double rows")
     (tags "Through hole angled pin header THT 2x04 2.54mm double row")
     (property "Sheetfile" "indicators.kicad_sch")
