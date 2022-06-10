@@ -1,0 +1,211 @@
+---
+
+- name: Provision Labpass Server
+  hosts: localhost
+
+  tasks:
+
+  - name: 'Install Docker'
+    apt:
+      name: docker.io
+      state: present
+
+  - name: Create root's .docker directory
+    ansible.builtin.file:
+      path: /root/.docker
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
+  
+  - name: Write docker registry login
+    ansible.builtin.template:
+      src: templates/docker-config.json.tpl
+      dest: /root/.docker/config.json
+      owner: root
+      group: root
+      mode: '0600'
+    notify:
+      - restart docker
+
+  - name: 'Install hostapd'
+    apt:
+      name: hostapd
+      state: present
+
+  - name: Install hostapd.conf file
+    ansible.builtin.template:
+      src: templates/hostapd.conf.tpl
+      dest: /etc/hostapd/hostapd.conf
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - restart hostapd
+
+  - name: Install hostapd into /etc/default
+    ansible.builtin.template:
+      src: templates/hostapd.tpl
+      dest: /etc/default/hostapd
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - restart hostapd
+  
+  - name: 'Install dnsmasq'
+    apt:
+      name: dnsmasq
+      state: present
+  
+  - name: Install dnsmasq conf file
+    ansible.builtin.template:
+      src: templates/dnsmasq.conf.tpl
+      dest: /etc/dnsmasq.conf
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - restart dnsmasq
+
+  - name: Install dnsmasq unit file
+    ansible.builtin.template:
+      src: templates/dnsmasq.service.tpl
+      dest: /etc/systemd/system/dnsmasq.service
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - reload systemd
+      - restart dnsmasq
+
+  - name: Install hosts.dnsmasq file
+    ansible.builtin.template:
+      src: templates/hosts.dnsmasq.tpl
+      dest: /etc/hosts.dnsmasq
+      owner: root
+      group: root
+      mode: '0644'
+    notify:
+      - restart dnsmasq
+
+  - name: Install labpass-seed systemd unit file
+    ansible.builtin.template:
+      src: templates/labpass-seed.service.tpl
+      dest: /etc/systemd/system/labpass-seed.service
+      owner: bin
+      group: root
+      mode: '0644'
+    notify:
+      - reload systemd
+
+  - name: Install postgress systemd unit file
+    ansible.builtin.template:
+      src: templates/postgres.service.tpl
+      dest: /etc/systemd/system/postgres.service
+      owner: bin
+      group: root
+      mode: '0644'
+    notify:
+      - reload systemd
+      - restart postgres
+  
+  - name: Install adminer systemd unit file
+    ansible.builtin.template:
+      src: templates/adminer.service.tpl
+      dest: /etc/systemd/system/adminer.service
+      owner: bin
+      group: root
+      mode: '0644'
+    notify:
+      - reload systemd
+      - restart adminer
+  
+  - name: Install labpass systemd unit file
+    ansible.builtin.template:
+      src: templates/labpass.service.tpl
+      dest: /etc/systemd/system/labpass.service
+      owner: bin
+      group: root
+      mode: '0644'
+    notify:
+      - reload systemd
+      - restart labpass
+  
+  - name: Enable service hostapd and ensure it is not masked
+    ansible.builtin.systemd:
+      name: hostapd
+      enabled: yes
+      masked: no
+      state: started
+  
+  - name: Enable service dnsmasq and ensure it is not masked
+    ansible.builtin.systemd:
+      name: dnsmasq
+      enabled: yes
+      masked: no
+      state: started
+  
+  - name: Enable service postgres and ensure it is not masked
+    ansible.builtin.systemd:
+      name: postgres
+      enabled: yes
+      masked: no
+      state: started
+  
+  - name: Enable service adminer and ensure it is not masked
+    ansible.builtin.systemd:
+      name: adminer
+      enabled: yes
+      masked: no
+      state: started
+  
+  - name: Enable service labpass
+    ansible.builtin.systemd:
+      name: labpass
+      enabled: yes
+      masked: no
+      state: started
+
+  handlers:
+
+  - name: reload systemd
+    become: yes
+    command: systemctl daemon-reload
+  
+  - name: restart postgres
+    ansible.builtin.systemd:
+      name: postgres
+      enabled: yes
+      state: restarted
+  
+  - name: restart adminer
+    ansible.builtin.systemd:
+      name: adminer
+      enabled: yes
+      state: restarted
+  
+  - name: restart labpass
+    ansible.builtin.systemd:
+      name: labpass
+      enabled: yes
+      state: restarted
+
+  - name: restart hostapd
+    ansible.builtin.systemd:
+      name: hostapd
+      enabled: yes
+      state: restarted
+  
+  - name: restart dnsmasq
+    ansible.builtin.systemd:
+      name: dnsmasq
+      enabled: yes
+      state: restarted
+  
+  - name: restart docker
+    ansible.builtin.systemd:
+      name: docker
+      enabled: yes
+      state: restarted
+  
