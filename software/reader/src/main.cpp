@@ -1,48 +1,134 @@
+#include <config.h>
+#include "setup.h"
 #include <Arduino.h>
-#include "driver/ledc.h"
-#include "low_freq/low_freq.h"
+#include <SPI.h>
+#include <Wire.h>
+#include "device/device.h"
+#include "labpass_client/client.h"
+
+#include "indicators/indicators.h"
+#include "low_freq_impl/low_freq_impl.h"
 #include "high_freq/high_freq.h"
-#include "tag/tag.h"
-#include "driver/mcpwm.h"
-#include "MFRC522.h"
 
-using namespace team17;
+esp_event_loop_handle_t loopHandle;
+Indicators * indicators;
+MFRC522_SPI *mfrc522spi;
+HighFrequency *highFrequency;
+LowFrequencyImpl *lowFreuqency;
 
-#define HF_NSS 21
-#define HF_RST 27
-#define HF_INT 33
+Indicators::Config indicatorsConfig{
+    .powerRedGPIO = LED_POWER_RED_GPIO,
+    .powerGreenGPIO = LED_POWER_GREEN_GPIO,
+    .powerBlueGPIO = LED_POWER_BLUE_GPIO,
+    .statusRedGPIO = LED_STATUS_RED_GPIO,
+    .statusGreenGPIO = LED_STATUS_GREEN_GPIO,
+    .statusBlueGPIO = LED_STATUS_BLUE_GPIO,
+    .buzzerGPIO = BUZZER_GPIO,
+    .relayGPIO = RELAY_GPIO};
 
-QueueHandle_t tagQueue = xQueueCreate(1, sizeof(Tag *));
-MFRC522_SPI mfrc522Spi = MFRC522_SPI(HF_NSS, HF_RST);
+void cardEvent(void *event_handler_arg, esp_event_base_t event_base, int event_id, void *event_data);
 
-LowFrequency lowFreq(tagQueue, RX);
-HighFrequency highFreq(tagQueue, mfrc522Spi);
+#include <WiFi.h>
 
-void lowFreqRXTask(void *parameter);
+String ssid = "7yv89tndqr_2g";
+String password = "exoticcarrot227";
+String baseURL = "http://192.168.1.63";
+String stationID = "72a72777-e7da-4837-a870-2f9afdbcffe8";
+String jwtToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIyODQyMDM1MTgsImZ1bGxOYW1lIjoic29sZGVyaW5nLWlyb24iLCJpZCI6IjcyYTcyNzc3LWU3ZGEtNDgzNy1hODcwLTJmOWFmZGJjZmZlOCIsInJvbGUiOiJzdGF0aW9uIn0.J5OE_OtbA2wjvY3bggsnP8iFVux212m5YhAGRu5hiKI";
+esp_event_loop_handle_t loop_handle;
 
-Tag *tag;
+Device *device;
+LabpassClient *client;
 
 void setup()
 {
-  Serial.begin(115200);
+    Serial.begin(115200);
 
-  error_t startErr = lowFreq.start();
-  if (startErr)
-  {
-    printf("start error: %d", startErr);
-  }
+    mfrc522spi = new MFRC522_SPI(HF_SS_PIN, HF_RST_PIN);
 
-  highFreq.start();
+    ledc_timer_config_t timerConfig{
+        .speed_mode = LEDC_HIGH_SPEED_MODE,
+        .duty_resolution = LEDC_TIMER_1_BIT,
+        .timer_num = LEDC_TIMER_0,
+        .freq_hz = 125000};
+
+    ESP_ERROR_CHECK(ledc_timer_config(&timerConfig));
+
+    setupGPIO();
+
+    indicators = new Indicators(indicatorsConfig);
+
+
+    esp_event_loop_args_t *loop_args = new esp_event_loop_args_t{
+        .queue_size = 5,
+        .task_name = "labpass_loop_task",
+        .task_priority = uxTaskPriorityGet(NULL),
+        .task_stack_size = 3072,
+        .task_core_id = tskNO_AFFINITY};
+
+    esp_event_loop_create(loop_args, &loopHandle);
+
+    esp_event_handler_register_with(
+        loopHandle,
+        LabpassLFReaderEvent,
+        ESP_EVENT_ANY_ID,
+        cardEvent,
+        NULL);
+
+    esp_event_handler_register_with(
+        loopHandle,
+        LabpassHFReaderEvent,
+        ESP_EVENT_ANY_ID,
+        cardEvent,
+        NULL);
+
+    lowFreuqency = new LowFrequencyImpl(loopHandle, LF_RX, LF_TX);
+    ESP_ERROR_CHECK(lowFreuqency->start());
+
+    highFrequency = new HighFrequency(loopHandle, mfrc522spi);
+    highFrequency->start();
+
+    client = new LabpassClient(baseURL, stationID, jwtToken);
+    device = new Device(ssid, password, loop_handle, client);
+
+    device->start();
 }
 
-void loop() 
+void loop()
 {
-    xQueueReceive(tagQueue, &tag, portMAX_DELAY);
+    delay(500);
+}
 
-    printf("Got %s tag: ", tag->getType().c_str());
-    for (auto b : *(tag->getData()))
+void cardEvent(void *event_handler_arg, esp_event_base_t event_base, int event_id, void *event_data)
+{
+    Tag *tag = (Tag *)event_data;
+    if (event_base == LabpassHFReaderEvent)
     {
-      printf("%02X", b);
+        switch (event_id)
+        {
+        case HighFrequency::labpassHFReaderEventType::longBadge:
+            log_i("long badge, MIFARE: %d", tag->hfTag.uuid);
+            indicators->doLongBadge();
+            break;
+        case HighFrequency::labpassHFReaderEventType::shortBadge:
+            log_i("short badge, MIFARE: %d", tag->hfTag.uuid);
+            indicators->doShortBadge();
+            break;
+        }
     }
-    printf("\n");
+    else if (event_base == LabpassLFReaderEvent)
+    {
+        switch (event_id)
+        {
+        case LowFrequencyImpl::labpassLFReaderEventType::longBadge:
+            log_i("long badge: %d, %d", tag->lfTag.facility, tag->lfTag.id);
+            indicators->doLongBadge();
+            break;
+        case LowFrequencyImpl::labpassLFReaderEventType::shortBadge:
+            log_i("short badge: %d, %d", tag->lfTag.facility, tag->lfTag.id);
+            indicators->doShortBadge();
+            break;
+        }
+    }
+
 }

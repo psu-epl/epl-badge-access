@@ -1,5 +1,10 @@
 # RFID Reader Software
 
+## High-Level Design
+![](https://raw.githubusercontent.com/wiki/psu-epl/epl-badge-access/assets/esp_modules.png)
+
+Each library is contained in its own directory with at least one header file and one cpp file.
+
 ## Local Development Environment Set-Up
 
 This code in this directory was made using [Visual Studio Code](https://code.visualstudio.com/), with the [PlatformIO extention](https://platformio.org/). To get started:
