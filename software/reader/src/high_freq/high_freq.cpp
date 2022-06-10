@@ -12,13 +12,12 @@ static volatile uint64_t last_badge = 0;
 #define ANTENNA_GAIN 0x02 << 4 // 23 dB
                                // http://www.nxp.com/documents/data_sheet/MFRC522.pdf
 
-ESP_EVENT_DEFINE_BASE(LabpassReaderEvent);
-
 HighFrequency::HighFrequency(esp_event_loop_handle_t eventLoop, MFRC522_SPI *mfrc522Spi) : mfrc522Spi_(mfrc522Spi),
                                                                                            mfrc522_(mfrc522Spi),
                                                                                            eventLoop_(eventLoop),
                                                                                            lastTagMutex_(xSemaphoreCreateMutex()),
-                                                                                           badgeDuration_(0)
+                                                                                           badgeDuration_(0),
+                                                                                           lastTag_(Tag())
 
 {
     esp_timer_create_args_t createArgs{
@@ -36,6 +35,7 @@ void HighFrequency::start()
     SPI.begin();         // Init SPI bus
     mfrc522_.PCD_Init(); // Init MFRC522 card
     mfrc522_.PCD_SetAntennaGain(ANTENNA_GAIN);
+
     xTaskCreate(
         wakeupTagTask,
         "HF Tag Wakeup",
@@ -45,7 +45,6 @@ void HighFrequency::start()
         NULL);
 
     byte gain = mfrc522_.PCD_GetAntennaGain();
-    log_i("antenna gain byte: %d", gain);
     log_i("starting hf rx loop");
 }
 
@@ -71,10 +70,7 @@ void HighFrequency::wakeupTagTask(void *p)
         }
         that->mfrc522_.PICC_HaltA();
 
-        // this is a tight loop; so feed the watchdog
-        TIMERG0.wdt_wprotect = TIMG_WDT_WKEY_VALUE;
-        TIMERG0.wdt_feed = 1;
-        TIMERG0.wdt_wprotect = 0;
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 
     vTaskDelete(NULL);
@@ -85,14 +81,9 @@ void HighFrequency::processTag()
     Tag tag;
     if (mfrc522_.PICC_ReadCardSerial() && mfrc522_.uid.size > 0)
     {
-        memcpy(&tag.hfTag.uuid, mfrc522_.uid.uidByte, mfrc522_.uid.size);
+        tag = Tag(mfrc522_.uid.uidByte, mfrc522_.uid.size);
     }
     else
-    {
-        return;
-    }
-
-    if (millis() - last_badge < 1000)
     {
         return;
     }
@@ -101,13 +92,13 @@ void HighFrequency::processTag()
     {
         if (millis() - badgeDuration_ > 5000)
         {
-            esp_event_post_to(
+            ESP_ERROR_CHECK(esp_event_post_to(
                 eventLoop_,
                 LabpassReaderEvent,
-                LabpassEvent::LongBadge,
+                LabpassEvent::LongHFBadge,
                 (void *)&tag,
                 sizeof(tag),
-                portMAX_DELAY);
+                portMAX_DELAY));
 
             esp_timer_stop(timerHandle_);
             last_badge = millis();
@@ -115,47 +106,44 @@ void HighFrequency::processTag()
         else
         {
             esp_timer_stop(timerHandle_);
-            esp_timer_start_once(timerHandle_, 2000000);
-            setLastTag(tag);
+            esp_timer_start_once(timerHandle_, 400000);
+            setLastTag(&tag);
         }
     }
     else
     {
-        esp_timer_start_once(timerHandle_, 2000000);
+        esp_timer_start_once(timerHandle_, 400000);
         badgeDuration_ = millis();
-        setLastTag(tag);
+        setLastTag(&tag);
     }
-
 }
 
 void HighFrequency::timerExpire(void *p)
 {
     HighFrequency *that = (HighFrequency *)p;
     last_badge = millis();
+    Tag lastTag;
+    that->getLastTag(&lastTag);
 
-    Tag lastTag = that->getLastTag();
-
-    esp_event_post_to(
+    ESP_ERROR_CHECK(esp_event_post_to(
         that->getEventLoop(),
         LabpassReaderEvent,
-        labpassEvent::ShortBadge,
+        LabpassEvent::ShortHFBadge,
         (void *)&lastTag,
         sizeof(lastTag),
-        portMAX_DELAY);
+        portMAX_DELAY));
 }
 
-Tag HighFrequency::getLastTag()
+void HighFrequency::getLastTag(Tag *tag)
 {
-    Tag newTag;
     xSemaphoreTake(lastTagMutex_, portMAX_DELAY);
-    newTag = lastTag_;
+    *tag = lastTag_;
     xSemaphoreGive(lastTagMutex_);
-    return newTag;
 }
 
-void HighFrequency::setLastTag(Tag tag)
+void HighFrequency::setLastTag(Tag *tag)
 {
     xSemaphoreTake(lastTagMutex_, portMAX_DELAY);
-    lastTag_ = tag;
+    lastTag_ = *tag;
     xSemaphoreGive(lastTagMutex_);
 }

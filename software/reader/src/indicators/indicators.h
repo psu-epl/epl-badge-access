@@ -40,10 +40,23 @@ public:
         LongBadge
     };
 
-    Indicators(Config &config);
+    Indicators(Config *config);
 
-    void doShortBadge();
-    void doLongBadge();
+    void doShortBadgeInAuthOk();
+    void doShortBadgeOutAuthOk();
+    void doNotAuthorized();
+    void doAuthError();
+
+    void doPowerNetReset();   // solid red
+    void doPowerInit();       // blinking red
+    void doPowerAPConnect();  // blinking orange
+    void doPowerIPAddress();  // slow blinking yellow
+    void doPowerPingWait();  // fast blinking yellow
+    void doPowerIdle();       // solid green
+
+    void doEnrollState();
+    void doEnrollSuccess();
+    void doEnrollContinue();
 
     void powerLEDOn(Color color);
     void powerLEDOff();
@@ -60,14 +73,14 @@ public:
     void relayOn();
     void relayOff();
 
-    void buzzerOn();
+    void buzzerOn(uint32_t freq);
     void buzzerOff();
     void buzzerShutdown();
 
-    void buzzerBlinkStart(uint64_t delay);
+    void buzzerBlinkStart(uint32_t freq, uint64_t delay);
 
 private:
-    Config &config_;
+    Config *config_;
     uint32_t duty_;
     uint32_t buzzerDuty_;
     static void powerBlinkTimerExpire(void *);
@@ -90,5 +103,11 @@ private:
 struct LEDState
 {
     Indicators::Color color;
+    bool on;
+};
+
+struct BuzzerState
+{
+    uint32_t freq;
     bool on;
 };

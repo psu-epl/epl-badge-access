@@ -4,6 +4,6 @@
 class LowFrequency
 {
 public:
-    virtual void sendTag(Tag &tag) = 0;
+    virtual void sendTag(Tag *tag) = 0;
     ~LowFrequency() {}
 };

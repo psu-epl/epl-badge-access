@@ -19,7 +19,4 @@ public:
     virtual String name() = 0;
     virtual ~DeviceState(){};
 
-protected:
-    uint32_t managerID_;
-    uint32_t userID_;
 };

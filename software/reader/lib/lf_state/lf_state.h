@@ -13,6 +13,14 @@ class LFState
 {
 public:
 
+    enum NextState
+    {
+        NoChange,
+        Sync,
+        Padding,
+        Payload,
+    };
+
     enum EdgeType
     {
         E0001,
@@ -23,7 +31,7 @@ public:
 
     virtual void enter(LowFrequency *lf) = 0;
     virtual void exit(LowFrequency *lf) = 0;
-    virtual void edgeEvent(LowFrequency *lf, EdgeType edgeType, LFState **outNextState) = 0;
+    virtual LFState::NextState edgeEvent(LowFrequency *lf, EdgeType edgeType) = 0;
 
     virtual string name() = 0;
     virtual ~LFState(){};

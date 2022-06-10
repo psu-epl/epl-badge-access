@@ -4,19 +4,19 @@ static volatile bool timer_active = false;
 static volatile uint64_t last_badge = 0;
 
 using namespace std;
-ESP_EVENT_DEFINE_BASE(LabpassLFReaderEvent);
 
 #define TIMER_DIVIDER (16)                           //  Hardware timer clock divider
 #define TIMER_SCALE (TIMER_BASE_CLK / TIMER_DIVIDER) // convert counter value to seconds
 
 LowFrequencyImpl::LowFrequencyImpl(esp_event_loop_handle_t eventLoop, uint8_t rx, uint8_t tx) : rx_(rx),
                                                                                                 tx_(tx),
-                                                                                                edgeQueue_(xQueueCreate(4096, sizeof(uint32_t))),
+                                                                                                edgeQueue_(xQueueCreate(1024, sizeof(uint32_t))),
                                                                                                 eventLoop_(eventLoop),
                                                                                                 badgeDuration_(0),
-                                                                                                fragBuf_(vector<LFState::EdgeType>()),
                                                                                                 currentState_(&LFStateSync::getInstance()),
-                                                                                                lastTagMutex_(xSemaphoreCreateMutex())
+                                                                                                lastTagMutex_(xSemaphoreCreateMutex()),
+                                                                                                stateChangeMutex_(xSemaphoreCreateMutex()),
+                                                                                                getQueueMutex_(xSemaphoreCreateMutex())
 
 {
     pinMode(tx_, OUTPUT);
@@ -32,13 +32,19 @@ LowFrequencyImpl::LowFrequencyImpl(esp_event_loop_handle_t eventLoop, uint8_t rx
     ESP_ERROR_CHECK(esp_timer_create(&createArgs, &timerHandle_));
 }
 
+QueueHandle_t LowFrequencyImpl::getEdgeQueue()
+{
+    QueueHandle_t queueHandle;
+    xSemaphoreTake(getQueueMutex_, portMAX_DELAY);
+    queueHandle = edgeQueue_;
+    xSemaphoreGive(getQueueMutex_);
+    return edgeQueue_;
+}
+
 esp_err_t LowFrequencyImpl::start()
 {
-    if (esp_err_t cerr = LowFrequencyImpl::carrierOn())
-    {
-        return cerr;
-    }
-    
+    carrierOn();
+
     mcpwm_pin_config_t pinConfig = {
         .mcpwm_cap0_in_num = rx_};
 
@@ -49,15 +55,17 @@ esp_err_t LowFrequencyImpl::start()
         .user_data = this
     };
 
+
     ESP_ERROR_CHECK(mcpwm_capture_enable_channel(MCPWM_UNIT_0, MCPWM_SELECT_CAP0, &capConfig));
     ESP_ERROR_CHECK(mcpwm_set_pin(MCPWM_UNIT_0, &pinConfig));
 
+
     xTaskCreate(
         edgeTask,
-        "edge task loop",
+        "edge_task_loop",
         4096,
         this,
-        5,
+        8,
         NULL);
 
     log_i("starting lf rx loop");
@@ -68,63 +76,72 @@ void LowFrequencyImpl::edgeTask(void *p)
 {
     LowFrequencyImpl *that = (LowFrequencyImpl *)p;
     LFState::EdgeType edgeType;
-    LFState *nextState = NULL;
+    LFState::NextState nextState = LFState::NoChange;
+    QueueHandle_t queueHandle = that->getEdgeQueue();
+    vector<LFState::EdgeType> fragBuf;
 
     for (;;)
     {
-        if (xQueueReceive(that->getEdgeQueue(), &edgeType, portMAX_DELAY))
+        if (xQueueReceive(queueHandle, &edgeType, portMAX_DELAY))
         {
-            if (that->fragBuf_.empty())
+            if (fragBuf.empty())
             {
-                that->fragBuf_.push_back(edgeType);
+                fragBuf.push_back(edgeType);
             }
             else
             {
                 if (edgeType == LFState::EdgeType::E1)
                 {
-                    that->fragBuf_.push_back(edgeType);
-                    if (that->fragBuf_.size() == 5)
+                    fragBuf.push_back(edgeType);
+
+                    if (fragBuf.size() == 5)
                     {
-                        that->getCurrentState()->edgeEvent(that, that->fragBuf_[0], &nextState);
-                        if (nextState)
+                        nextState = that->getCurrentState()->edgeEvent(that, fragBuf[0]);
+
+                        switch (nextState)
                         {
-                            that->setState(nextState);
-                        }
-                        that->fragBuf_.clear();
+                            case LFState::NoChange:
+                                break;
+                            case LFState::Sync:
+                                that->setState(LFStateSync::getInstance());
+                                break;
+                            case LFState::Padding:
+                                that->setState(LFStatePadding::getInstance());
+                                break;
+                            case LFState::Payload:
+                                that->setState(LFStatePayload::getInstance());
+                                break;
+                            default:
+                                break;
+                            }
+
+                        fragBuf.clear();
                     }
                 }
+                else
+                {
+                    fragBuf.clear();
+                }
             }
-
         }
-    }
-}
-
-void LowFrequencyImpl::edgeTask2(void *p)
-{
-    LowFrequencyImpl *that = (LowFrequencyImpl *)p;
-    uint32_t edge;
-
-    for (;;)
-    {
-        if (xQueueReceive(that->getEdgeQueue(), &edge, portMAX_DELAY))
+        else
         {
-            printf("%d\n", edge);
+            fragBuf.clear();
         }
     }
 }
 
-void LowFrequencyImpl::setState(LFState *newState)
+void LowFrequencyImpl::setState(LFState &newState)
 {
     currentState_->exit(this);
-    currentState_ = newState;
+    currentState_ = &newState;
     currentState_->enter(this);
 }
 
 Tag LowFrequencyImpl::getLastTag()
 {
-    Tag newTag;
     xSemaphoreTake(lastTagMutex_, portMAX_DELAY);
-    newTag = lastTag_;
+    Tag newTag(lastTag_);
     xSemaphoreGive(lastTagMutex_);
     return newTag;
 }
@@ -136,21 +153,16 @@ void LowFrequencyImpl::setLastTag(Tag tag)
     xSemaphoreGive(lastTagMutex_);
 }
 
-void LowFrequencyImpl::sendTag(Tag &tag)
+void LowFrequencyImpl::sendTag(Tag *tag)
 {
-    if (millis() - last_badge < 1000)
-    {
-        return;
-    }
-
     if (esp_timer_is_active(timerHandle_))
     {
         if (millis() - badgeDuration_ > 5000)
-        {            
+        {
             esp_event_post_to(
                 eventLoop_,
                 LabpassReaderEvent,
-                LabpassEvent::LongBadge,
+                LabpassEvent::LongLFBadge,
                 (void *)&tag,
                 sizeof(tag),
                 portMAX_DELAY);
@@ -162,63 +174,41 @@ void LowFrequencyImpl::sendTag(Tag &tag)
         {
             esp_timer_stop(timerHandle_);
             esp_timer_start_once(timerHandle_, 400000);
-            setLastTag(tag);
+            setLastTag(*tag);
         }
     }
     else
     {
         esp_timer_start_once(timerHandle_, 400000);
         badgeDuration_ = millis();
-        setLastTag(tag);
+        setLastTag(*tag);
     }
 }
 
-void IRAM_ATTR LowFrequencyImpl::timerExpire(void *p)
+void LowFrequencyImpl::timerExpire(void *p)
 {
     LowFrequencyImpl *that = (LowFrequencyImpl *)p;
     last_badge = millis();
 
     Tag lastTag = that->getLastTag();
-
+    log_i("timer expired SENDING");
     esp_event_post_to(
         that->getEventLoop(),
         LabpassReaderEvent,
-        LabpassEvent::ShortBadge,
+        LabpassEvent::ShortLFBadge,
         (void *)&lastTag,
         sizeof(lastTag),
         portMAX_DELAY);
 }
 
-bool LowFrequencyImpl::edgeCallback2(mcpwm_unit_t mcpwm, mcpwm_capture_channel_id_t cap_channel, const cap_event_data_t *edata, void *user_data)
-{
-    static uint32_t previousEdgeTimestamp = 0;
-    BaseType_t high_task_wakeup = pdFALSE;
-    QueueHandle_t edgeQueue = (QueueHandle_t)user_data;
-
-    uint32_t edgePeriod = edata->cap_value - previousEdgeTimestamp;
-    previousEdgeTimestamp = edata->cap_value;
-    if (edgePeriod < 1500)
-    {
-        return high_task_wakeup;
-    }
-
-    xQueueSendFromISR(edgeQueue, &edgePeriod, &high_task_wakeup);
-    return high_task_wakeup;
-}
-
 bool IRAM_ATTR LowFrequencyImpl::edgeCallback(mcpwm_unit_t mcpwm, mcpwm_capture_channel_id_t cap_channel, const cap_event_data_t *edata, void *user_data)
 {
-    // log_i("edge");
     static uint32_t previousEdgeTimestamp = 0;
     BaseType_t high_task_wakeup = pdFALSE;
     LowFrequencyImpl *that = (LowFrequencyImpl *)user_data;
 
     uint32_t edgePeriod = edata->cap_value - previousEdgeTimestamp;
     previousEdgeTimestamp = edata->cap_value;
-    if (edgePeriod < 1500)
-    {
-        return high_task_wakeup;
-    }
 
     LFState::EdgeType edgeType;
 
@@ -243,30 +233,32 @@ bool IRAM_ATTR LowFrequencyImpl::edgeCallback(mcpwm_unit_t mcpwm, mcpwm_capture_
         return high_task_wakeup;
     }
 
-    xQueueSendFromISR(that->getEdgeQueue(), &edgeType, &high_task_wakeup);
+    high_task_wakeup = xQueueSend(that->getEdgeQueue(), &edgeType, portMAX_DELAY);
     return high_task_wakeup;
 }
 
-esp_err_t LowFrequencyImpl::carrierOn()
+void LowFrequencyImpl::carrierOn()
 {
+    ledc_timer_config_t timerConfig{
+        .speed_mode = LEDC_HIGH_SPEED_MODE,
+        .duty_resolution = LEDC_TIMER_1_BIT,
+        .timer_num = LEDC_TIMER_0,
+        .freq_hz = 125000};
 
-    // ledc_channel_config_t channelConfig{
-    //     .gpio_num = TX,
-    //     .speed_mode = LEDC_HIGH_SPEED_MODE,
-    //     .channel = LEDC_CHANNEL_0,
-    //     .intr_type = LEDC_INTR_DISABLE,
-    //     .timer_sel = LEDC_TIMER_0,
-    //     .duty = PWM_DUTYCYCLE,
-    //     .hpoint = 0xffff,
-    // };
+    ESP_ERROR_CHECK_WITHOUT_ABORT(ledc_timer_config(&timerConfig));
 
-    // if (esp_err_t cerr = ledc_channel_config(&channelConfig))
-    // {
-    //     return cerr;
-    // }
+    ledc_channel_config_t channelConfig{
+        .gpio_num = TX,
+        .speed_mode = LEDC_HIGH_SPEED_MODE,
+        .channel = LEDC_CHANNEL_0,
+        .intr_type = LEDC_INTR_DISABLE,
+        .timer_sel = LEDC_TIMER_0,
+        .duty = PWM_DUTYCYCLE,
+        .hpoint = 0xffff,
+    };
+
+    ESP_ERROR_CHECK_WITHOUT_ABORT(ledc_channel_config(&channelConfig));
 
     ledcAttachPin(TX, PWM_CHANNEL);
     ledcWrite(PWM_CHANNEL, PWM_DUTYCYCLE);
-
-    return (esp_err_t) 0;
 }
